@@ -137,10 +137,10 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Prepare Image Name
-      id: image_name
+    - name: Make variables lowercase
+      id: lowercase
       run: |
-        echo "name=${GITHUB_REPOSITORY,,}" >> $GITHUB_OUTPUT
+        echo "repo_owner=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_OUTPUT
 
     - name: Package Helm chart
       run: |
@@ -148,4 +148,4 @@ jobs:
 
     - name: Push Helm chart to OCI registry
       run: |
-        helm push flux-extension-controller-${{ steps.version.outputs.version }}.tgz oci://${{ env.REGISTRY }}/helm-charts/
+        helm push flux-extension-controller-${{ steps.version.outputs.version }}.tgz oci://${{ env.REGISTRY }}/${{ steps.lowercase.outputs.repo_owner }}/helm-charts/
