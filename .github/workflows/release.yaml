@@ -1,11 +1,6 @@
 name: Release
 
 on:
-  workflow_dispatch:
-    inputs:
-        tag:
-          description: 'Tag to release (e.g., v1.0.0)'
-          required: true
   push:
     tags:
       - 'v*'
@@ -56,15 +51,9 @@ jobs:
     - name: Extract version from tag
       id: version
       run: |
-        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-          # Use the manually provided tag input
-          TAG="${{ github.event.inputs.tag }}"
-          VERSION="${TAG#v}"
-        else
-          # Extract from GITHUB_REF for tag pushes
-          TAG="${GITHUB_REF#refs/tags/}"
-          VERSION="${TAG#v}"
-        fi
+        # Extract from GITHUB_REF for tag pushes
+        TAG="${GITHUB_REF#refs/tags/}"
+        VERSION="${TAG#v}"
         echo "version=$VERSION" >> $GITHUB_OUTPUT
 
     - name: Update Chart.yaml with release version
@@ -127,15 +116,9 @@ jobs:
     - name: Extract version from tag
       id: version
       run: |
-        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-          # Use the manually provided tag input
-          TAG="${{ github.event.inputs.tag }}"
-          VERSION="${TAG#v}"
-        else
-          # Extract from GITHUB_REF for tag pushes
-          TAG="${GITHUB_REF#refs/tags/}"
-          VERSION="${TAG#v}"
-        fi
+        # Extract from GITHUB_REF for tag pushes
+        TAG="${GITHUB_REF#refs/tags/}"
+        VERSION="${TAG#v}"
         echo "version=$VERSION" >> $GITHUB_OUTPUT
 
     - name: Update Chart.yaml with release version
@@ -149,11 +132,6 @@ jobs:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Prepare Image Name
-      id: image_name
-      run: |
-        echo "name=${GITHUB_REPOSITORY,,}" >> $GITHUB_OUTPUT
 
     - name: Package and push Helm chart to OCI registry
       run: |
