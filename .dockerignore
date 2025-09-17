@@ -1,0 +1,6 @@
+.github
+.gitignore
+config.yaml.example
+renovate.json
+LICENSE
+README.md
