@@ -39,6 +39,26 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
   - events
   verbs:
   - create
@@ -115,4 +135,3 @@ subjects:
   name: {{ include "flux-extension-controller.serviceAccountName" . }}
   namespace: {{ .Release.Namespace }}
 {{- end }}
-
