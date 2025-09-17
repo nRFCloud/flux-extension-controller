@@ -6,9 +6,9 @@
   "packageRules": [
     {
       "groupName": "Go",
-      "matchManagers": ["dockerfile"],
-      "matchPackageNames": ["golang"],
-      "matchDatasources": ["docker", "golang-version"]
+      "matchManagers": ["dockerfile", "github-actions"],
+      "matchPackageNames": ["golang", "go"],
+      "matchDatasources": ["docker", "golang-version", "github-tags"]
     }
   ]
 }
