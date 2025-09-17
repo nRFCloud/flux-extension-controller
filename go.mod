@@ -10,9 +10,9 @@ require (
 	github.com/google/go-github/v57 v57.0.0
 	github.com/stretchr/testify v1.10.0
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.34.0
-	k8s.io/apimachinery v0.34.0
-	k8s.io/client-go v0.34.0
+	k8s.io/api v0.34.1
+	k8s.io/apimachinery v0.34.1
+	k8s.io/client-go v0.34.1
 	sigs.k8s.io/controller-runtime v0.22.1
 )
 
