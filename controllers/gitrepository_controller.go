@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -126,10 +127,18 @@ func (r *GitRepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	return ctrl.Result{RequeueAfter: 30 * time.Minute}, nil
 }
 
-// isNamespaceExcluded checks if the namespace should be excluded from processing
+// isNamespaceExcluded checks if the namespace should be excluded from processing using glob patterns
 func (r *GitRepositoryReconciler) isNamespaceExcluded(namespace string) bool {
 	for _, excluded := range r.Config.Controller.ExcludedNamespaces {
-		if namespace == excluded {
+		// Use filepath.Match for glob pattern matching
+		matched, err := filepath.Match(excluded, namespace)
+		if err != nil {
+			// If pattern is invalid, fall back to exact string matching
+			r.logger.V(1).Info("Invalid glob pattern, using exact match", "pattern", excluded, "error", err)
+			if namespace == excluded {
+				return true
+			}
+		} else if matched {
 			return true
 		}
 	}

@@ -506,6 +506,91 @@ func TestIsNamespaceExcluded(t *testing.T) {
 	}
 }
 
+func TestIsNamespaceExcludedWithGlobPatterns(t *testing.T) {
+	cfg := &config.Config{
+		Controller: config.ControllerConfig{
+			ExcludedNamespaces: []string{"flux-*", "kube-*", "test-ns-?", "*-system"},
+		},
+	}
+
+	reconciler := &GitRepositoryReconciler{
+		Config: cfg,
+		logger: ctrl.Log.WithName("test"),
+	}
+
+	tests := []struct {
+		namespace string
+		excluded  bool
+	}{
+		// Test flux-* pattern
+		{"flux-system", true},
+		{"flux-dev", true},
+		{"flux-prod", true},
+		{"fluxcd", false}, // doesn't match flux-*
+
+		// Test kube-* pattern
+		{"kube-system", true},
+		{"kube-public", true},
+		{"kube-node-lease", true},
+		{"kubernetes", false}, // doesn't match kube-*
+
+		// Test test-ns-? pattern (single character wildcard)
+		{"test-ns-1", true},
+		{"test-ns-a", true},
+		{"test-ns-12", false}, // doesn't match ? (single char)
+		{"test-ns-", false},   // doesn't match ? (missing char)
+
+		// Test *-system pattern
+		{"flux-system", true},
+		{"kube-system", true},
+		{"monitoring-system", true},
+		{"system", false},      // doesn't match *-system
+		{"system-test", false}, // doesn't match *-system
+
+		// Test non-matching namespaces
+		{"default", false},
+		{"my-namespace", false},
+		{"production", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.namespace, func(t *testing.T) {
+			result := reconciler.isNamespaceExcluded(tt.namespace)
+			assert.Equal(t, tt.excluded, result, "Expected namespace %s exclusion to be %v", tt.namespace, tt.excluded)
+		})
+	}
+}
+
+func TestIsNamespaceExcludedWithInvalidGlobPattern(t *testing.T) {
+	cfg := &config.Config{
+		Controller: config.ControllerConfig{
+			ExcludedNamespaces: []string{"[invalid-pattern", "flux-system"},
+		},
+	}
+
+	reconciler := &GitRepositoryReconciler{
+		Config: cfg,
+		logger: ctrl.Log.WithName("test"),
+	}
+
+	tests := []struct {
+		namespace string
+		excluded  bool
+	}{
+		// Invalid pattern should fall back to exact string matching
+		{"[invalid-pattern", true}, // exact match
+		{"invalid-pattern", false}, // no match
+		{"flux-system", true},      // valid pattern match
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.namespace, func(t *testing.T) {
+			result := reconciler.isNamespaceExcluded(tt.namespace)
+			assert.Equal(t, tt.excluded, result)
+		})
+	}
+}
+
 func TestIsTargetOrganizationRepository(t *testing.T) {
 	cfg := &config.Config{
 		GitHub: config.GitHubConfig{
