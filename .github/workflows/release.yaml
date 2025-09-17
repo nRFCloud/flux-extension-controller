@@ -134,4 +134,4 @@ jobs:
     - name: Package and push Helm chart to OCI registry
       run: |
         helm package chart --version ${{ steps.version.outputs.version }} --app-version ${{ steps.version.outputs.version }}
-        helm push flux-extension-controller-${{ steps.version.outputs.version }}.tgz oci://${{ github.repository_owner }}/charts/flux-extension-controller
+        helm push flux-extension-controller-${{ steps.version.outputs.version }}.tgz oci://${{ env.registry }}/${{ github.repository_owner }}/charts/flux-extension-controller
