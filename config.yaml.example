@@ -1,0 +1,21 @@
+# Example configuration for development
+github:
+  appId: 123456  # Replace with your GitHub App ID
+  privateKeyPath: "/etc/github/private-key"
+  organization: "your-org"  # Replace with your GitHub organization
+
+controller:
+  excludedNamespaces:
+    - "flux-system"
+    - "kube-system"
+    - "kube-public"
+  watchAllNamespaces: true
+  replicas: 1  # Number of controller replicas
+
+leaderElection:
+  enabled: false
+  id: "flux-extension-controller"  # Customizable leader election name
+
+tokenRefresh:
+  refreshInterval: "50m"
+  tokenLifetime: "60m"

@@ -1,0 +1,140 @@
+# Default values for flux-extension-controller.
+# This is a YAML-formatted file.
+
+# Deployment configuration
+replicaCount: 1
+
+image:
+  repository: nrfcloud/flux-extension-controller
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# Controller configuration
+controller:
+  # GitHub organization to manage
+  organization: ""
+
+  # Namespaces to exclude from processing
+  excludedNamespaces:
+    - "flux-system"
+    - "kube-system"
+    - "kube-public"
+    - "default"
+
+  # Watch all namespaces
+  watchAllNamespaces: true
+
+  # Token refresh configuration
+  tokenRefresh:
+    # How often to check for tokens that need refresh (default: 50 minutes)
+    refreshInterval: "50m"
+    # Token lifetime (default: 60 minutes)
+    tokenLifetime: "60m"
+
+  # Leader election
+  leaderElection:
+    enabled: null  # If null, leader election is enabled if replicaCount > 1
+    id: "flux-extension-controller"  # Customizable leader election name
+
+# GitHub App configuration
+github:
+  # GitHub App ID (required)
+  appId: ""
+
+  # Secret containing GitHub App private key
+  # The secret should contain a key named 'private-key' with the PEM-encoded private key
+  privateKeySecret:
+    name: "github-app-credentials"
+    key: "private-key"
+
+# Service account configuration
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+# Pod annotations
+podAnnotations: {}
+
+# Pod security context
+podSecurityContext:
+  fsGroup: 65532
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+
+# Container security context
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 65532
+
+# Resource limits and requests
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# Node selection and scheduling
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Health check configuration
+healthCheck:
+  enabled: true
+  port: 8081
+  address: "0.0.0.0"
+
+# Metrics configuration
+metrics:
+  enabled: true
+  port: 8080
+  address: "0.0.0.0"
+  serviceMonitor:
+    enabled: false
+    additionalLabels: {}
+
+# RBAC configuration
+rbac:
+  create: true
+
+# Network policy
+networkPolicy:
+  enabled: false
+
+# Priority class
+priorityClassName: ""
+
+# Additional environment variables
+env: []
+  # - name: LOG_LEVEL
+  #   value: "info"
+
+# Additional volumes
+extraVolumes: []
+
+# Additional volume mounts
+extraVolumeMounts: []
+
+# Pod disruption budget
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1

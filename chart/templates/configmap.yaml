@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "flux-extension-controller.fullname" . }}-config
+  labels:
+    {{- include "flux-extension-controller.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    github:
+      appId: {{ .Values.github.appId }}
+      privateKeyPath: "/etc/github/private-key"
+      organization: "{{ .Values.controller.organization }}"
+    controller:
+      excludedNamespaces:
+        {{- range .Values.controller.excludedNamespaces }}
+        - {{ . | quote }}
+        {{- end }}
+      watchAllNamespaces: {{ .Values.controller.watchAllNamespaces }}
+      replicas: {{ .Values.replicaCount }}
+    leaderElection:
+      enabled: {{ .Values.controller.leaderElection.enabled | default (gt (int .Values.replicaCount) 1) }}
+      id: "{{ .Values.controller.leaderElection.id | default "flux-extension-controller" }}"
+    tokenRefresh:
+      refreshInterval: {{ .Values.controller.tokenRefresh.refreshInterval }}
+      tokenLifetime: {{ .Values.controller.tokenRefresh.tokenLifetime }}
+    metrics:
+      address: "{{ .Values.metrics.address }}:{{ .Values.metrics.port }}"
+    healthProbe:
+      address: "{{ .Values.healthCheck.address }}:{{ .Values.healthCheck.port }}"
