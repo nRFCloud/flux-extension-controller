@@ -37,7 +37,8 @@ controller:
 
   # Leader election
   leaderElection:
-    enabled: true
+    enabled: null  # If null, leader election is enabled if replicaCount > 1
+    id: "flux-extension-controller"  # Customizable leader election name
 
 # GitHub App configuration
 github:

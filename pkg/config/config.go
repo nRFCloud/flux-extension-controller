@@ -11,11 +11,12 @@ import (
 
 // Config holds the controller configuration
 type Config struct {
-	GitHub       GitHubConfig       `yaml:"github"`
-	Controller   ControllerConfig   `yaml:"controller"`
-	TokenRefresh TokenRefreshConfig `yaml:"tokenRefresh"`
-	Metrics      MetricsConfig      `yaml:"metrics"`
-	HealthProbe  HealthProbeConfig  `yaml:"healthProbe"`
+	GitHub         GitHubConfig         `yaml:"github"`
+	Controller     ControllerConfig     `yaml:"controller"`
+	LeaderElection LeaderElectionConfig `yaml:"leaderElection"`
+	TokenRefresh   TokenRefreshConfig   `yaml:"tokenRefresh"`
+	Metrics        MetricsConfig        `yaml:"metrics"`
+	HealthProbe    HealthProbeConfig    `yaml:"healthProbe"`
 }
 
 // GitHubConfig holds GitHub App configuration
@@ -30,6 +31,13 @@ type GitHubConfig struct {
 type ControllerConfig struct {
 	ExcludedNamespaces []string `yaml:"excludedNamespaces"`
 	WatchAllNamespaces bool     `yaml:"watchAllNamespaces"`
+	Replicas           int      `yaml:"replicas"`
+}
+
+// LeaderElectionConfig holds leader election configuration
+type LeaderElectionConfig struct {
+	Enabled bool   `yaml:"enabled"`
+	ID      string `yaml:"id"`
 }
 
 // TokenRefreshConfig holds token refresh configuration
@@ -54,6 +62,11 @@ func LoadConfig(configPath string) (*Config, error) {
 		Controller: ControllerConfig{
 			ExcludedNamespaces: []string{"flux-system"},
 			WatchAllNamespaces: true,
+			Replicas:           1, // Default to 1 replica
+		},
+		LeaderElection: LeaderElectionConfig{
+			Enabled: false,                       // Will be set based on replicas later
+			ID:      "flux-extension-controller", // Default leader election ID
 		},
 		TokenRefresh: TokenRefreshConfig{
 			RefreshInterval: 50 * time.Minute,
@@ -102,6 +115,32 @@ func LoadConfig(configPath string) (*Config, error) {
 
 	if organization := os.Getenv("GITHUB_ORGANIZATION"); organization != "" {
 		cfg.GitHub.Organization = organization
+	}
+
+	// Override leader election settings from environment variables
+	if leaderElectionEnabled := os.Getenv("LEADER_ELECTION_ENABLED"); leaderElectionEnabled != "" {
+		cfg.LeaderElection.Enabled = leaderElectionEnabled == "true"
+	}
+
+	if leaderElectionID := os.Getenv("LEADER_ELECTION_ID"); leaderElectionID != "" {
+		cfg.LeaderElection.ID = leaderElectionID
+	}
+
+	if replicas := os.Getenv("REPLICAS"); replicas != "" {
+		var count int
+		if _, err := fmt.Sscanf(replicas, "%d", &count); err != nil {
+			return nil, fmt.Errorf("invalid REPLICAS: %w", err)
+		}
+		cfg.Controller.Replicas = count
+	}
+
+	// Automatically disable leader election if replicas <= 1
+	// This can be overridden by explicitly setting leaderElection.enabled in config
+	if cfg.Controller.Replicas <= 1 && os.Getenv("LEADER_ELECTION_ENABLED") == "" {
+		cfg.LeaderElection.Enabled = false
+	} else if cfg.Controller.Replicas > 1 && !cfg.LeaderElection.Enabled && os.Getenv("LEADER_ELECTION_ENABLED") == "" {
+		// Enable leader election by default when replicas > 1 unless explicitly disabled
+		cfg.LeaderElection.Enabled = true
 	}
 
 	// Validate required fields

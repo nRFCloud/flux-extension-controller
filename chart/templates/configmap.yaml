@@ -16,6 +16,10 @@ data:
         - {{ . | quote }}
         {{- end }}
       watchAllNamespaces: {{ .Values.controller.watchAllNamespaces }}
+      replicas: {{ .Values.replicaCount }}
+    leaderElection:
+      enabled: {{ .Values.controller.leaderElection.enabled | default (gt (int .Values.replicaCount) 1) }}
+      id: "{{ .Values.controller.leaderElection.id | default "flux-extension-controller" }}"
     tokenRefresh:
       refreshInterval: {{ .Values.controller.tokenRefresh.refreshInterval }}
       tokenLifetime: {{ .Values.controller.tokenRefresh.tokenLifetime }}

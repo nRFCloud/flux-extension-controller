@@ -28,12 +28,8 @@ func init() {
 }
 
 func main() {
-	var enableLeaderElection bool
 	var configPath string
 
-	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
-		"Enable leader election for controller manager. "+
-			"Enabling this will ensure there is only one active controller manager.")
 	flag.StringVar(&configPath, "config", "/etc/config/config.yaml", "Path to the configuration file.")
 
 	opts := zap.Options{
@@ -57,8 +53,8 @@ func main() {
 			BindAddress: cfg.Metrics.Address,
 		},
 		HealthProbeBindAddress: cfg.HealthProbe.Address,
-		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "flux-extension-controller",
+		LeaderElection:         cfg.LeaderElection.Enabled,
+		LeaderElectionID:       cfg.LeaderElection.ID,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")

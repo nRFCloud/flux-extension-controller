@@ -40,7 +40,6 @@ spec:
         command:
         - /manager
         args:
-        - --leader-elect={{ .Values.controller.leaderElection.enabled }}
         - --config=/etc/config/config.yaml
         env:
         - name: GITHUB_APP_ID

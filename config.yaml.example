@@ -10,6 +10,11 @@ controller:
     - "kube-system"
     - "kube-public"
   watchAllNamespaces: true
+  replicas: 1  # Number of controller replicas
+
+leaderElection:
+  enabled: false
+  id: "flux-extension-controller"  # Customizable leader election name
 
 tokenRefresh:
   refreshInterval: "50m"
