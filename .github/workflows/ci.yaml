@@ -81,13 +81,13 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
       with:
-        platforms: linux/amd64,linux/arm64
+        platforms: linux/amd64
 
     - name: Build Docker image
       uses: docker/build-push-action@v6
       with:
         context: .
-        platforms: linux/amd64,linux/arm64
+        platforms: linux/amd64
         push: false
         tags: test-image:latest
         cache-from: type=gha
