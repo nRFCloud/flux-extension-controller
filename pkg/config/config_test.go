@@ -14,6 +14,7 @@ func TestLoadConfig_FromFile(t *testing.T) {
 	configContent := `
 github:
   appId: 12345
+  installationId: 67890
   privateKeyPath: "/path/to/key"
   organization: "testorg"
 
@@ -39,6 +40,7 @@ tokenRefresh:
 	require.NoError(t, err)
 
 	assert.Equal(t, int64(12345), cfg.GitHub.AppID)
+	assert.Equal(t, int64(67890), cfg.GitHub.InstallationID)
 	assert.Equal(t, "/path/to/key", cfg.GitHub.PrivateKeyPath)
 	assert.Equal(t, "testorg", cfg.GitHub.Organization)
 	assert.Equal(t, []string{"test-namespace"}, cfg.Controller.ExcludedNamespaces)
@@ -51,6 +53,7 @@ func TestLoadConfig_WithEnvironmentVariables(t *testing.T) {
 	// Set environment variables
 	originalValues := map[string]string{
 		"GITHUB_APP_ID":           os.Getenv("GITHUB_APP_ID"),
+		"GITHUB_INSTALLATION_ID":  os.Getenv("GITHUB_INSTALLATION_ID"),
 		"GITHUB_PRIVATE_KEY_PATH": os.Getenv("GITHUB_PRIVATE_KEY_PATH"),
 		"GITHUB_ORGANIZATION":     os.Getenv("GITHUB_ORGANIZATION"),
 	}
@@ -67,6 +70,7 @@ func TestLoadConfig_WithEnvironmentVariables(t *testing.T) {
 	}()
 
 	os.Setenv("GITHUB_APP_ID", "67890")
+	os.Setenv("GITHUB_INSTALLATION_ID", "11223")
 	os.Setenv("GITHUB_PRIVATE_KEY_PATH", "/env/path/to/key")
 	os.Setenv("GITHUB_ORGANIZATION", "envorg")
 
@@ -75,6 +79,7 @@ func TestLoadConfig_WithEnvironmentVariables(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, int64(67890), cfg.GitHub.AppID)
+	assert.Equal(t, int64(11223), cfg.GitHub.InstallationID)
 	assert.Equal(t, "/env/path/to/key", cfg.GitHub.PrivateKeyPath)
 	assert.Equal(t, "envorg", cfg.GitHub.Organization)
 }
@@ -158,6 +163,16 @@ func TestLoadConfig_ValidationErrors(t *testing.T) {
 				os.Setenv("GITHUB_ORGANIZATION", "testorg")
 			},
 			expectedErr: "invalid GITHUB_APP_ID",
+		},
+		{
+			name: "invalid installation ID",
+			setupEnv: func() {
+				os.Setenv("GITHUB_APP_ID", "123")
+				os.Setenv("GITHUB_INSTALLATION_ID", "invalid")
+				os.Setenv("GITHUB_PRIVATE_KEY_PATH", "/test/key")
+				os.Setenv("GITHUB_ORGANIZATION", "testorg")
+			},
+			expectedErr: "invalid GITHUB_INSTALLATION_ID",
 		},
 	}
 

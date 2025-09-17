@@ -19,4 +19,7 @@ data:
     tokenRefresh:
       refreshInterval: {{ .Values.controller.tokenRefresh.refreshInterval }}
       tokenLifetime: {{ .Values.controller.tokenRefresh.tokenLifetime }}
-
+    metrics:
+      address: "{{ .Values.metrics.address }}:{{ .Values.metrics.port }}"
+    healthProbe:
+      address: "{{ .Values.healthCheck.address }}:{{ .Values.healthCheck.port }}"

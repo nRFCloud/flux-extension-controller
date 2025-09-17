@@ -100,11 +100,13 @@ affinity: {}
 healthCheck:
   enabled: true
   port: 8081
+  address: "0.0.0.0"
 
 # Metrics configuration
 metrics:
   enabled: true
   port: 8080
+  address: "0.0.0.0"
   serviceMonitor:
     enabled: false
     additionalLabels: {}

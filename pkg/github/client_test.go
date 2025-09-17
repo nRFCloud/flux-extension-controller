@@ -256,3 +256,46 @@ func TestJWTTransport(t *testing.T) {
 	_, err = transport.RoundTrip(req)
 	assert.NoError(t, err)
 }
+
+func TestInstallationIDConfiguration(t *testing.T) {
+	// Test that installation ID is properly configured
+	cfg := &config.GitHubConfig{
+		AppID:          123456,
+		InstallationID: 12345,
+		Organization:   "testorg",
+	}
+
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	require.NoError(t, err)
+
+	client := &Client{
+		config:     cfg,
+		privateKey: privateKey,
+	}
+
+	// Verify the client has the correct configuration
+	assert.Equal(t, int64(12345), client.config.InstallationID)
+	assert.Equal(t, int64(123456), client.config.AppID)
+	assert.Equal(t, "testorg", client.config.Organization)
+}
+
+func TestInstallationIDDefaultsToZero(t *testing.T) {
+	// Test that installation ID defaults to 0 when not configured
+	cfg := &config.GitHubConfig{
+		AppID:        123456,
+		Organization: "testorg",
+		// No InstallationID set
+	}
+
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	require.NoError(t, err)
+
+	client := &Client{
+		config:     cfg,
+		privateKey: privateKey,
+	}
+
+	// Verify the installation ID is 0 (not configured)
+	assert.Equal(t, int64(0), client.config.InstallationID)
+	assert.Equal(t, int64(123456), client.config.AppID)
+}

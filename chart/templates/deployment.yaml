@@ -41,8 +41,6 @@ spec:
         - /manager
         args:
         - --leader-elect={{ .Values.controller.leaderElection.enabled }}
-        - --metrics-bind-address=:{{ .Values.metrics.port }}
-        - --health-probe-bind-address=:{{ .Values.healthCheck.port }}
         - --config=/etc/config/config.yaml
         env:
         - name: GITHUB_APP_ID
@@ -117,4 +115,3 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       terminationGracePeriodSeconds: 10
-

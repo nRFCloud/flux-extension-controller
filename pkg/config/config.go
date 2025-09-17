@@ -14,11 +14,14 @@ type Config struct {
 	GitHub       GitHubConfig       `yaml:"github"`
 	Controller   ControllerConfig   `yaml:"controller"`
 	TokenRefresh TokenRefreshConfig `yaml:"tokenRefresh"`
+	Metrics      MetricsConfig      `yaml:"metrics"`
+	HealthProbe  HealthProbeConfig  `yaml:"healthProbe"`
 }
 
 // GitHubConfig holds GitHub App configuration
 type GitHubConfig struct {
 	AppID          int64  `yaml:"appId"`
+	InstallationID int64  `yaml:"installationId,omitempty"`
 	PrivateKeyPath string `yaml:"privateKeyPath"`
 	Organization   string `yaml:"organization"`
 }
@@ -35,6 +38,16 @@ type TokenRefreshConfig struct {
 	TokenLifetime   time.Duration `yaml:"tokenLifetime"`
 }
 
+// MetricsConfig holds metrics configuration
+type MetricsConfig struct {
+	Address string `yaml:"address"`
+}
+
+// HealthProbeConfig holds health probe configuration
+type HealthProbeConfig struct {
+	Address string `yaml:"address"`
+}
+
 // LoadConfig loads configuration from file and environment variables
 func LoadConfig(configPath string) (*Config, error) {
 	cfg := &Config{
@@ -45,6 +58,12 @@ func LoadConfig(configPath string) (*Config, error) {
 		TokenRefresh: TokenRefreshConfig{
 			RefreshInterval: 50 * time.Minute,
 			TokenLifetime:   60 * time.Minute,
+		},
+		Metrics: MetricsConfig{
+			Address: "0.0.0.0:8080",
+		},
+		HealthProbe: HealthProbeConfig{
+			Address: "0.0.0.0:8081",
 		},
 	}
 
@@ -67,6 +86,14 @@ func LoadConfig(configPath string) (*Config, error) {
 			return nil, fmt.Errorf("invalid GITHUB_APP_ID: %w", err)
 		}
 		cfg.GitHub.AppID = id
+	}
+
+	if installationID := os.Getenv("GITHUB_INSTALLATION_ID"); installationID != "" {
+		var id int64
+		if _, err := fmt.Sscanf(installationID, "%d", &id); err != nil {
+			return nil, fmt.Errorf("invalid GITHUB_INSTALLATION_ID: %w", err)
+		}
+		cfg.GitHub.InstallationID = id
 	}
 
 	if privateKeyPath := os.Getenv("GITHUB_PRIVATE_KEY_PATH"); privateKeyPath != "" {

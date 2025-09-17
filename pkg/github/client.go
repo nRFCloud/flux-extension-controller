@@ -83,16 +83,24 @@ func (c *Client) GenerateInstallationToken(ctx context.Context, repoURL string) 
 		},
 	})
 
-	// Find installation for the repository
-	installation, err := c.findInstallation(ctx, owner, repo, jwtClient)
-	if err != nil {
-		return nil, fmt.Errorf("failed to find installation: %w", err)
+	var installationID int64
+
+	// Use configured installation ID if provided, otherwise find it dynamically
+	if c.config.InstallationID != 0 {
+		installationID = c.config.InstallationID
+	} else {
+		// Find installation for the repository
+		installation, err := c.findInstallation(ctx, owner, repo, jwtClient)
+		if err != nil {
+			return nil, fmt.Errorf("failed to find installation: %w", err)
+		}
+		installationID = installation.GetID()
 	}
 
 	// Create installation token
 	installationToken, _, err := jwtClient.Apps.CreateInstallationToken(
 		ctx,
-		installation.GetID(),
+		installationID,
 		&github.InstallationTokenOptions{
 			Repositories: []string{repo},
 		},
