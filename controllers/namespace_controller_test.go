@@ -74,8 +74,8 @@ func TestNamespaceReconciler_Reconcile(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "filtered-ns",
 					Annotations: map[string]string{
-						SyncTargetAnnotation:                 "true",
-						SyncTargetAnnotation + "/configmaps": "config-1,config-3",
+						SyncTargetAnnotation: "true",
+						"flux-extension.nrfcloud.com/sync-target-configmaps": "config-1,config-3",
 					},
 				},
 			},
@@ -283,8 +283,8 @@ func TestNamespaceReconciler_shouldSyncToNamespace(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "target-ns",
 					Annotations: map[string]string{
-						SyncTargetAnnotation:                 "true",
-						SyncTargetAnnotation + "/configmaps": "test-config,other-config",
+						SyncTargetAnnotation: "true",
+						"flux-extension.nrfcloud.com/sync-target-configmaps": "test-config,other-config",
 					},
 				},
 			},
@@ -301,8 +301,8 @@ func TestNamespaceReconciler_shouldSyncToNamespace(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "target-ns",
 					Annotations: map[string]string{
-						SyncTargetAnnotation:                 "true",
-						SyncTargetAnnotation + "/configmaps": "other-config,another-config",
+						SyncTargetAnnotation: "true",
+						"flux-extension.nrfcloud.com/sync-target-configmaps": "other-config,another-config",
 					},
 				},
 			},
@@ -324,8 +324,8 @@ func TestNamespaceReconciler_shouldSyncToNamespace(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-config",
 					Annotations: map[string]string{
-						SyncConfigMapAnnotation:                 "true",
-						SyncConfigMapAnnotation + "/namespaces": "target-ns,other-ns",
+						SyncConfigMapAnnotation:                                 "true",
+						"flux-extension.nrfcloud.com/sync-configmap-namespaces": "target-ns,other-ns",
 					},
 				},
 			},
@@ -342,8 +342,8 @@ func TestNamespaceReconciler_shouldSyncToNamespace(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-config",
 					Annotations: map[string]string{
-						SyncConfigMapAnnotation:                 "true",
-						SyncConfigMapAnnotation + "/namespaces": "other-ns,another-ns",
+						SyncConfigMapAnnotation:                                 "true",
+						"flux-extension.nrfcloud.com/sync-configmap-namespaces": "other-ns,another-ns",
 					},
 				},
 			},
