@@ -7,6 +7,7 @@ require (
 	github.com/go-logr/logr v1.3.0
 	github.com/golang-jwt/jwt/v5 v5.2.0
 	github.com/google/go-github/v57 v57.0.0
+	github.com/stretchr/testify v1.8.4
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.28.4
 	k8s.io/apimachinery v0.28.6
@@ -19,6 +20,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
+	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/evanphx/json-patch/v5 v5.7.0 // indirect
 	github.com/fluxcd/pkg/apis/meta v1.3.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
@@ -45,11 +47,13 @@ require (
 	github.com/onsi/ginkgo/v2 v2.13.0 // indirect
 	github.com/onsi/gomega v1.30.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.17.0 // indirect
 	github.com/prometheus/client_model v0.5.0 // indirect
 	github.com/prometheus/common v0.45.0 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/stretchr/objx v0.5.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.26.0 // indirect
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e // indirect

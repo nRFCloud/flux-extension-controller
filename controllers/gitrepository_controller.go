@@ -29,9 +29,9 @@ type GitRepositoryReconciler struct {
 	Scheme *runtime.Scheme
 	Config *config.Config
 
-	githubClient   *github.Client
+	githubClient   github.GitHubClient
 	secretManager  *kubernetes.SecretManager
-	refreshManager *token.RefreshManager
+	refreshManager token.RefreshManagerInterface
 	logger         logr.Logger
 }
 

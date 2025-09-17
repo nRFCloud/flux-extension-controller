@@ -17,7 +17,7 @@ import (
 // RefreshManager manages token refresh operations
 type RefreshManager struct {
 	client        client.Client
-	githubClient  *github.Client
+	githubClient  github.GitHubClient
 	secretManager *kubernetes.SecretManager
 	logger        logr.Logger
 
@@ -42,7 +42,7 @@ type RefreshJob struct {
 // NewRefreshManager creates a new token refresh manager
 func NewRefreshManager(
 	client client.Client,
-	githubClient *github.Client,
+	githubClient github.GitHubClient,
 	secretManager *kubernetes.SecretManager,
 	refreshInterval time.Duration,
 	logger logr.Logger,
