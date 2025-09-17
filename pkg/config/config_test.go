@@ -104,12 +104,13 @@ func TestLoadConfig_Defaults(t *testing.T) {
 	// Create minimal config with required fields via env vars for validation
 	os.Setenv("GITHUB_APP_ID", "123")
 	os.Setenv("GITHUB_PRIVATE_KEY_PATH", "/test/key")
+	os.Setenv("GITHUB_ORGANIZATION", "testorg")
 
 	cfg, err := LoadConfig("/nonexistent/config.yaml")
 	require.NoError(t, err)
 
-	// Test defaults
-	assert.Equal(t, "nrfcloud", cfg.GitHub.Organization)
+	// Test defaults - organization should come from env var now, not default
+	assert.Equal(t, "testorg", cfg.GitHub.Organization)
 	assert.Equal(t, []string{"flux-system"}, cfg.Controller.ExcludedNamespaces)
 	assert.True(t, cfg.Controller.WatchAllNamespaces)
 	assert.Equal(t, 50*time.Minute, cfg.TokenRefresh.RefreshInterval)
@@ -127,6 +128,7 @@ func TestLoadConfig_ValidationErrors(t *testing.T) {
 			setupEnv: func() {
 				os.Unsetenv("GITHUB_APP_ID")
 				os.Setenv("GITHUB_PRIVATE_KEY_PATH", "/test/key")
+				os.Setenv("GITHUB_ORGANIZATION", "testorg")
 			},
 			expectedErr: "GitHub App ID is required",
 		},
@@ -135,14 +137,25 @@ func TestLoadConfig_ValidationErrors(t *testing.T) {
 			setupEnv: func() {
 				os.Setenv("GITHUB_APP_ID", "123")
 				os.Unsetenv("GITHUB_PRIVATE_KEY_PATH")
+				os.Setenv("GITHUB_ORGANIZATION", "testorg")
 			},
 			expectedErr: "GitHub private key path is required",
+		},
+		{
+			name: "missing organization",
+			setupEnv: func() {
+				os.Setenv("GITHUB_APP_ID", "123")
+				os.Setenv("GITHUB_PRIVATE_KEY_PATH", "/test/key")
+				os.Unsetenv("GITHUB_ORGANIZATION")
+			},
+			expectedErr: "GitHub organization is required",
 		},
 		{
 			name: "invalid app ID",
 			setupEnv: func() {
 				os.Setenv("GITHUB_APP_ID", "invalid")
 				os.Setenv("GITHUB_PRIVATE_KEY_PATH", "/test/key")
+				os.Setenv("GITHUB_ORGANIZATION", "testorg")
 			},
 			expectedErr: "invalid GITHUB_APP_ID",
 		},

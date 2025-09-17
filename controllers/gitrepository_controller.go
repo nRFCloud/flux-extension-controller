@@ -61,9 +61,9 @@ func (r *GitRepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, nil
 	}
 
-	// Check if this is a github.com/nrfcloud repository
-	if !r.isNRFCloudRepository(gitRepo.Spec.URL) {
-		logger.V(1).Info("Skipping non-nrfcloud repository", "url", gitRepo.Spec.URL)
+	// Check if this is a repository from the target organization
+	if !r.isTargetOrganizationRepository(gitRepo.Spec.URL) {
+		logger.V(1).Info("Skipping repository from different organization", "url", gitRepo.Spec.URL)
 		return ctrl.Result{}, nil
 	}
 
@@ -136,8 +136,8 @@ func (r *GitRepositoryReconciler) isNamespaceExcluded(namespace string) bool {
 	return false
 }
 
-// isNRFCloudRepository checks if the repository URL belongs to the configured organization
-func (r *GitRepositoryReconciler) isNRFCloudRepository(url string) bool {
+// isTargetOrganizationRepository checks if the repository URL belongs to the configured organization
+func (r *GitRepositoryReconciler) isTargetOrganizationRepository(url string) bool {
 	orgPrefix := fmt.Sprintf("https://github.com/%s/", r.Config.GitHub.Organization)
 	return strings.HasPrefix(url, orgPrefix)
 }

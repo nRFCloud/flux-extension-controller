@@ -15,14 +15,15 @@ fullnameOverride: ""
 
 # Controller configuration
 controller:
-  # GitHub organization to manage (default: nrfcloud)
-  organization: "nrfcloud"
+  # GitHub organization to manage
+  organization: ""
 
   # Namespaces to exclude from processing
   excludedNamespaces:
     - "flux-system"
     - "kube-system"
     - "kube-public"
+    - "default"
 
   # Watch all namespaces
   watchAllNamespaces: true

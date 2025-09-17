@@ -77,7 +77,7 @@ func TestGitRepositoryReconciler_Reconcile_Success(t *testing.T) {
 			Namespace: "default",
 		},
 		Spec: sourcev1.GitRepositorySpec{
-			URL: "https://github.com/nrfcloud/test-repository",
+			URL: "https://github.com/testorg/test-repository",
 			SecretRef: &meta.LocalObjectReference{
 				Name: "test-secret",
 			},
@@ -89,7 +89,7 @@ func TestGitRepositoryReconciler_Reconcile_Success(t *testing.T) {
 	// Create test configuration
 	cfg := &config.Config{
 		GitHub: config.GitHubConfig{
-			Organization: "nrfcloud",
+			Organization: "testorg",
 		},
 		Controller: config.ControllerConfig{
 			ExcludedNamespaces: []string{"flux-system"},
@@ -108,9 +108,9 @@ func TestGitRepositoryReconciler_Reconcile_Success(t *testing.T) {
 	}
 
 	// Set up mock expectations
-	mockGitHubClient.On("ValidateRepositoryURL", "https://github.com/nrfcloud/test-repository").Return(nil)
-	mockGitHubClient.On("GenerateInstallationToken", mock.Anything, "https://github.com/nrfcloud/test-repository").Return(installationToken, nil)
-	mockRefreshManager.On("ScheduleRefresh", mock.Anything, "default", "test-secret", "https://github.com/nrfcloud/test-repository").Return(nil)
+	mockGitHubClient.On("ValidateRepositoryURL", "https://github.com/testorg/test-repository").Return(nil)
+	mockGitHubClient.On("GenerateInstallationToken", mock.Anything, "https://github.com/testorg/test-repository").Return(installationToken, nil)
+	mockRefreshManager.On("ScheduleRefresh", mock.Anything, "default", "test-secret", "https://github.com/testorg/test-repository").Return(nil)
 
 	// Create reconciler
 	reconciler := &GitRepositoryReconciler{
@@ -166,11 +166,11 @@ func TestGitRepositoryReconciler_Reconcile_Success(t *testing.T) {
 	mockRefreshManager.AssertExpectations(t)
 }
 
-func TestGitRepositoryReconciler_Reconcile_NonNRFCloudRepo(t *testing.T) {
+func TestGitRepositoryReconciler_Reconcile_NonTargetOrganization(t *testing.T) {
 	s := scheme.Scheme
 	require.NoError(t, sourcev1.AddToScheme(s))
 
-	// Create GitRepository with non-nrfcloud URL
+	// Create GitRepository with different organization URL
 	gitRepo := &sourcev1.GitRepository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-repo",
@@ -185,7 +185,7 @@ func TestGitRepositoryReconciler_Reconcile_NonNRFCloudRepo(t *testing.T) {
 
 	cfg := &config.Config{
 		GitHub: config.GitHubConfig{
-			Organization: "nrfcloud",
+			Organization: "testorg",
 		},
 		Controller: config.ControllerConfig{
 			ExcludedNamespaces: []string{"flux-system"},
@@ -207,7 +207,7 @@ func TestGitRepositoryReconciler_Reconcile_NonNRFCloudRepo(t *testing.T) {
 		},
 	}
 
-	// Should skip non-nrfcloud repositories
+	// Should skip repositories from other organizations
 	result, err := reconciler.Reconcile(ctx, req)
 	require.NoError(t, err)
 	assert.Equal(t, ctrl.Result{}, result)
@@ -224,7 +224,7 @@ func TestGitRepositoryReconciler_Reconcile_ExcludedNamespace(t *testing.T) {
 			Namespace: "flux-system",
 		},
 		Spec: sourcev1.GitRepositorySpec{
-			URL: "https://github.com/nrfcloud/test-repository",
+			URL: "https://github.com/testorg/test-repository",
 		},
 	}
 
@@ -232,7 +232,7 @@ func TestGitRepositoryReconciler_Reconcile_ExcludedNamespace(t *testing.T) {
 
 	cfg := &config.Config{
 		GitHub: config.GitHubConfig{
-			Organization: "nrfcloud",
+			Organization: "testorg",
 		},
 		Controller: config.ControllerConfig{
 			ExcludedNamespaces: []string{"flux-system"},
@@ -271,7 +271,7 @@ func TestGitRepositoryReconciler_Reconcile_NoSecretRef(t *testing.T) {
 			Namespace: "default",
 		},
 		Spec: sourcev1.GitRepositorySpec{
-			URL: "https://github.com/nrfcloud/test-repository",
+			URL: "https://github.com/testorg/test-repository",
 			// No SecretRef specified
 		},
 	}
@@ -280,7 +280,7 @@ func TestGitRepositoryReconciler_Reconcile_NoSecretRef(t *testing.T) {
 
 	cfg := &config.Config{
 		GitHub: config.GitHubConfig{
-			Organization: "nrfcloud",
+			Organization: "testorg",
 		},
 		Controller: config.ControllerConfig{
 			ExcludedNamespaces: []string{"flux-system"},
@@ -288,7 +288,7 @@ func TestGitRepositoryReconciler_Reconcile_NoSecretRef(t *testing.T) {
 	}
 
 	mockGitHubClient := &MockGitHubClient{}
-	mockGitHubClient.On("ValidateRepositoryURL", "https://github.com/nrfcloud/test-repository").Return(nil)
+	mockGitHubClient.On("ValidateRepositoryURL", "https://github.com/testorg/test-repository").Return(nil)
 
 	reconciler := &GitRepositoryReconciler{
 		Client:       fakeClient,
@@ -324,7 +324,7 @@ func TestGitRepositoryReconciler_Reconcile_ValidationFailure(t *testing.T) {
 			Namespace: "default",
 		},
 		Spec: sourcev1.GitRepositorySpec{
-			URL: "https://github.com/nrfcloud/test-repository",
+			URL: "https://github.com/testorg/test-repository",
 			SecretRef: &meta.LocalObjectReference{
 				Name: "test-secret",
 			},
@@ -335,7 +335,7 @@ func TestGitRepositoryReconciler_Reconcile_ValidationFailure(t *testing.T) {
 
 	cfg := &config.Config{
 		GitHub: config.GitHubConfig{
-			Organization: "nrfcloud",
+			Organization: "testorg",
 		},
 		Controller: config.ControllerConfig{
 			ExcludedNamespaces: []string{"flux-system"},
@@ -343,7 +343,7 @@ func TestGitRepositoryReconciler_Reconcile_ValidationFailure(t *testing.T) {
 	}
 
 	mockGitHubClient := &MockGitHubClient{}
-	mockGitHubClient.On("ValidateRepositoryURL", "https://github.com/nrfcloud/test-repository").Return(assert.AnError)
+	mockGitHubClient.On("ValidateRepositoryURL", "https://github.com/testorg/test-repository").Return(assert.AnError)
 
 	reconciler := &GitRepositoryReconciler{
 		Client:        fakeClient,
@@ -390,7 +390,7 @@ func TestGitRepositoryReconciler_Reconcile_TokenGenerationFailure(t *testing.T) 
 			Namespace: "default",
 		},
 		Spec: sourcev1.GitRepositorySpec{
-			URL: "https://github.com/nrfcloud/test-repository",
+			URL: "https://github.com/testorg/test-repository",
 			SecretRef: &meta.LocalObjectReference{
 				Name: "test-secret",
 			},
@@ -401,7 +401,7 @@ func TestGitRepositoryReconciler_Reconcile_TokenGenerationFailure(t *testing.T) 
 
 	cfg := &config.Config{
 		GitHub: config.GitHubConfig{
-			Organization: "nrfcloud",
+			Organization: "testorg",
 		},
 		Controller: config.ControllerConfig{
 			ExcludedNamespaces: []string{"flux-system"},
@@ -409,8 +409,8 @@ func TestGitRepositoryReconciler_Reconcile_TokenGenerationFailure(t *testing.T) 
 	}
 
 	mockGitHubClient := &MockGitHubClient{}
-	mockGitHubClient.On("ValidateRepositoryURL", "https://github.com/nrfcloud/test-repository").Return(nil)
-	mockGitHubClient.On("GenerateInstallationToken", mock.Anything, "https://github.com/nrfcloud/test-repository").Return(nil, assert.AnError)
+	mockGitHubClient.On("ValidateRepositoryURL", "https://github.com/testorg/test-repository").Return(nil)
+	mockGitHubClient.On("GenerateInstallationToken", mock.Anything, "https://github.com/testorg/test-repository").Return(nil, assert.AnError)
 
 	reconciler := &GitRepositoryReconciler{
 		Client:        fakeClient,
@@ -446,7 +446,7 @@ func TestGitRepositoryReconciler_Reconcile_DeletedResource(t *testing.T) {
 
 	cfg := &config.Config{
 		GitHub: config.GitHubConfig{
-			Organization: "nrfcloud",
+			Organization: "testorg",
 		},
 	}
 
@@ -506,10 +506,10 @@ func TestIsNamespaceExcluded(t *testing.T) {
 	}
 }
 
-func TestIsNRFCloudRepository(t *testing.T) {
+func TestIsTargetOrganizationRepository(t *testing.T) {
 	cfg := &config.Config{
 		GitHub: config.GitHubConfig{
-			Organization: "nrfcloud",
+			Organization: "testorg",
 		},
 	}
 
@@ -521,15 +521,15 @@ func TestIsNRFCloudRepository(t *testing.T) {
 		url      string
 		expected bool
 	}{
-		{"https://github.com/nrfcloud/test-repo", true},
-		{"https://github.com/nrfcloud/another-repo", true},
+		{"https://github.com/testorg/test-repo", true},
+		{"https://github.com/testorg/another-repo", true},
 		{"https://github.com/other-org/test-repo", false},
-		{"https://gitlab.com/nrfcloud/test-repo", false},
+		{"https://gitlab.com/testorg/test-repo", false},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.url, func(t *testing.T) {
-			result := reconciler.isNRFCloudRepository(tt.url)
+			result := reconciler.isTargetOrganizationRepository(tt.url)
 			assert.Equal(t, tt.expected, result)
 		})
 	}

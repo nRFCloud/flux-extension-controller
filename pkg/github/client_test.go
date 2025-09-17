@@ -23,7 +23,7 @@ func TestValidateRepositoryURL(t *testing.T) {
 
 	cfg := &config.GitHubConfig{
 		AppID:        123456,
-		Organization: "nrfcloud",
+		Organization: "testorg",
 	}
 
 	client := &Client{
@@ -38,13 +38,13 @@ func TestValidateRepositoryURL(t *testing.T) {
 		errorMsg    string
 	}{
 		{
-			name:        "valid nrfcloud repository",
-			repoURL:     "https://github.com/nrfcloud/test-repo",
+			name:        "valid organization repository",
+			repoURL:     "https://github.com/testorg/test-repo",
 			expectError: false,
 		},
 		{
-			name:        "valid nrfcloud repository with .git suffix",
-			repoURL:     "https://github.com/nrfcloud/test-repo.git",
+			name:        "valid organization repository with .git suffix",
+			repoURL:     "https://github.com/testorg/test-repo.git",
 			expectError: false,
 		},
 		{
@@ -55,7 +55,7 @@ func TestValidateRepositoryURL(t *testing.T) {
 		},
 		{
 			name:        "non-github host",
-			repoURL:     "https://gitlab.com/nrfcloud/test-repo",
+			repoURL:     "https://gitlab.com/testorg/test-repo",
 			expectError: true,
 			errorMsg:    "repository must be hosted on github.com",
 		},
@@ -63,11 +63,11 @@ func TestValidateRepositoryURL(t *testing.T) {
 			name:        "wrong organization",
 			repoURL:     "https://github.com/other-org/test-repo",
 			expectError: true,
-			errorMsg:    "repository must belong to organization nrfcloud",
+			errorMsg:    "repository must belong to organization testorg",
 		},
 		{
 			name:        "invalid path",
-			repoURL:     "https://github.com/nrfcloud",
+			repoURL:     "https://github.com/testorg",
 			expectError: true,
 			errorMsg:    "invalid repository path",
 		},
@@ -96,15 +96,15 @@ func TestParseRepositoryURL(t *testing.T) {
 	}{
 		{
 			name:          "standard GitHub URL",
-			repoURL:       "https://github.com/nrfcloud/test-repo",
-			expectedOwner: "nrfcloud",
+			repoURL:       "https://github.com/testorg/test-repo",
+			expectedOwner: "testorg",
 			expectedRepo:  "test-repo",
 			expectError:   false,
 		},
 		{
 			name:          "GitHub URL with .git suffix",
-			repoURL:       "https://github.com/nrfcloud/test-repo.git",
-			expectedOwner: "nrfcloud",
+			repoURL:       "https://github.com/testorg/test-repo.git",
+			expectedOwner: "testorg",
 			expectedRepo:  "test-repo",
 			expectError:   false,
 		},
@@ -115,7 +115,7 @@ func TestParseRepositoryURL(t *testing.T) {
 		},
 		{
 			name:        "incomplete path",
-			repoURL:     "https://github.com/nrfcloud",
+			repoURL:     "https://github.com/testorg",
 			expectError: true,
 		},
 	}
@@ -172,7 +172,7 @@ func TestGenerateInstallationToken_Validation(t *testing.T) {
 
 	cfg := &config.GitHubConfig{
 		AppID:        123456,
-		Organization: "nrfcloud",
+		Organization: "testorg",
 	}
 
 	client := &Client{
@@ -181,12 +181,12 @@ func TestGenerateInstallationToken_Validation(t *testing.T) {
 	}
 
 	// Test validation of repository URL before token generation
-	err = client.ValidateRepositoryURL("https://github.com/nrfcloud/test-repo")
+	err = client.ValidateRepositoryURL("https://github.com/testorg/test-repo")
 	assert.NoError(t, err)
 
 	err = client.ValidateRepositoryURL("https://github.com/other-org/test-repo")
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "repository must belong to organization nrfcloud")
+	assert.Contains(t, err.Error(), "repository must belong to organization testorg")
 }
 
 func TestLoadPrivateKey(t *testing.T) {

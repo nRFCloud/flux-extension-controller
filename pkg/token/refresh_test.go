@@ -46,7 +46,7 @@ func TestRefreshManager_ScheduleRefresh(t *testing.T) {
 			Annotations: map[string]string{
 				kubernetes.AnnotationManagedBy:     "flux-extension-controller",
 				kubernetes.AnnotationTokenExpiry:   expiresAt.Format(time.RFC3339),
-				kubernetes.AnnotationRepositoryURL: "https://github.com/nrfcloud/test-repo",
+				kubernetes.AnnotationRepositoryURL: "https://github.com/testorg/test-repo",
 			},
 		},
 		Data: map[string][]byte{
@@ -69,7 +69,7 @@ func TestRefreshManager_ScheduleRefresh(t *testing.T) {
 	)
 
 	ctx := context.Background()
-	err := refreshManager.ScheduleRefresh(ctx, "test-namespace", "test-secret", "https://github.com/nrfcloud/test-repo")
+	err := refreshManager.ScheduleRefresh(ctx, "test-namespace", "test-secret", "https://github.com/testorg/test-repo")
 	require.NoError(t, err)
 
 	// Verify job was scheduled
@@ -82,7 +82,7 @@ func TestRefreshManager_ScheduleRefresh(t *testing.T) {
 	assert.NotNil(t, job)
 	assert.Equal(t, "test-namespace", job.SecretNamespace)
 	assert.Equal(t, "test-secret", job.SecretName)
-	assert.Equal(t, "https://github.com/nrfcloud/test-repo", job.RepositoryURL)
+	assert.Equal(t, "https://github.com/testorg/test-repo", job.RepositoryURL)
 	assert.NotNil(t, job.Timer)
 	assert.NotNil(t, job.Cancel)
 
@@ -147,7 +147,7 @@ func TestRefreshManager_CheckAndRefreshExpiredTokens(t *testing.T) {
 				Annotations: map[string]string{
 					kubernetes.AnnotationManagedBy:     "flux-extension-controller",
 					kubernetes.AnnotationTokenExpiry:   soonExpires.Format(time.RFC3339),
-					kubernetes.AnnotationRepositoryURL: "https://github.com/nrfcloud/test-repo-1",
+					kubernetes.AnnotationRepositoryURL: "https://github.com/testorg/test-repo-1",
 				},
 			},
 		},
@@ -158,7 +158,7 @@ func TestRefreshManager_CheckAndRefreshExpiredTokens(t *testing.T) {
 				Annotations: map[string]string{
 					kubernetes.AnnotationManagedBy:     "flux-extension-controller",
 					kubernetes.AnnotationTokenExpiry:   laterExpires.Format(time.RFC3339),
-					kubernetes.AnnotationRepositoryURL: "https://github.com/nrfcloud/test-repo-2",
+					kubernetes.AnnotationRepositoryURL: "https://github.com/testorg/test-repo-2",
 				},
 			},
 		},
@@ -229,7 +229,7 @@ func TestRefreshManager_executeRefresh(t *testing.T) {
 			Annotations: map[string]string{
 				kubernetes.AnnotationManagedBy:     "flux-extension-controller",
 				kubernetes.AnnotationTokenExpiry:   time.Now().Add(5 * time.Minute).Format(time.RFC3339),
-				kubernetes.AnnotationRepositoryURL: "https://github.com/nrfcloud/test-repo",
+				kubernetes.AnnotationRepositoryURL: "https://github.com/testorg/test-repo",
 			},
 		},
 		Data: map[string][]byte{
@@ -252,7 +252,7 @@ func TestRefreshManager_executeRefresh(t *testing.T) {
 	)
 
 	// Set up mock expectations
-	repoURL := "https://github.com/nrfcloud/test-repo"
+	repoURL := "https://github.com/testorg/test-repo"
 	newExpiresAt := time.Now().Add(1 * time.Hour)
 	newToken := &github.InstallationToken{
 		Token:     github.String("new-refreshed-token"),
@@ -312,7 +312,7 @@ func TestRefreshManager_executeRefresh_ValidationFailure(t *testing.T) {
 	)
 
 	// Set up mock to return validation error
-	repoURL := "https://github.com/nrfcloud/test-repo"
+	repoURL := "https://github.com/testorg/test-repo"
 	mockGitHubClient.On("ValidateRepositoryURL", repoURL).Return(assert.AnError)
 
 	job := &RefreshJob{

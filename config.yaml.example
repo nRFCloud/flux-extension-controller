@@ -2,7 +2,7 @@
 github:
   appId: 123456  # Replace with your GitHub App ID
   privateKeyPath: "/etc/github/private-key"
-  organization: "nrfcloud"
+  organization: "your-org"  # Replace with your GitHub organization
 
 controller:
   excludedNamespaces:

@@ -38,9 +38,6 @@ type TokenRefreshConfig struct {
 // LoadConfig loads configuration from file and environment variables
 func LoadConfig(configPath string) (*Config, error) {
 	cfg := &Config{
-		GitHub: GitHubConfig{
-			Organization: "nrfcloud",
-		},
 		Controller: ControllerConfig{
 			ExcludedNamespaces: []string{"flux-system"},
 			WatchAllNamespaces: true,
@@ -87,6 +84,10 @@ func LoadConfig(configPath string) (*Config, error) {
 
 	if cfg.GitHub.PrivateKeyPath == "" {
 		return nil, fmt.Errorf("GitHub private key path is required")
+	}
+
+	if cfg.GitHub.Organization == "" {
+		return nil, fmt.Errorf("GitHub organization is required")
 	}
 
 	return cfg, nil
