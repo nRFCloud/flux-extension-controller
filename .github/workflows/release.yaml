@@ -7,7 +7,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }} | toLower
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   release:
@@ -60,6 +60,11 @@ jobs:
         go mod download
         make test
 
+    - name: Prepare Image Name
+      id: image_name
+      run: |
+        echo "name=${GITHUB_REPOSITORY,,}" >> $GITHUB_OUTPUT
+
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
       with:
@@ -67,8 +72,8 @@ jobs:
         platforms: linux/amd64,linux/arm64
         push: true
         tags: |
-          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
-          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          ${{ env.REGISTRY }}/${{ steps.image_name.outputs.name }}:${{ steps.version.outputs.version }}
+          ${{ env.REGISTRY }}/${{ steps.image_name.outputs.name }}:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
