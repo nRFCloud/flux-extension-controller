@@ -20,14 +20,14 @@ The feature uses two controllers:
 Add these annotations to ConfigMaps in the `flux-system` namespace:
 
 - `flux-extension.nrfcloud.com/sync-configmap: "true"` - Marks the ConfigMap for syncing
-- `flux-extension.nrfcloud.com/sync-configmap/namespaces: "namespace1,namespace2"` - (Optional) Comma-separated list of specific target namespaces
+- `flux-extension.nrfcloud.com/sync-configmap-namespaces: "namespace1,namespace2"` - (Optional) Comma-separated list of specific target namespaces
 
 ### Namespace Annotations (Target)
 
 Add these annotations to namespaces that should receive synced ConfigMaps:
 
 - `flux-extension.nrfcloud.com/sync-target: "true"` - Marks the namespace as a sync target
-- `flux-extension.nrfcloud.com/sync-target/configmaps: "config1,config2"` - (Optional) Comma-separated list of specific ConfigMaps to sync
+- `flux-extension.nrfcloud.com/sync-target-configmaps: "config1,config2"` - (Optional) Comma-separated list of specific ConfigMaps to sync
 
 ### Synced ConfigMap Annotations
 
@@ -77,7 +77,7 @@ metadata:
   namespace: flux-system
   annotations:
     flux-extension.nrfcloud.com/sync-configmap: "true"
-    flux-extension.nrfcloud.com/sync-configmap/namespaces: "staging,production"
+    flux-extension.nrfcloud.com/sync-configmap-namespaces: "staging,production"
 data:
   ca.crt: |
     -----BEGIN CERTIFICATE-----
@@ -93,7 +93,7 @@ metadata:
   name: development
   annotations:
     flux-extension.nrfcloud.com/sync-target: "true"
-    flux-extension.nrfcloud.com/sync-target/configmaps: "shared-config,dev-config"
+    flux-extension.nrfcloud.com/sync-target-configmaps: "shared-config,dev-config"
 ```
 
 ### Example 3: Multiple ConfigMaps

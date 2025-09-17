@@ -95,7 +95,7 @@ func (r *ConfigMapReconciler) getTargetNamespaces(ctx context.Context, configMap
 
 	// Check if specific namespaces are specified in the annotation
 	if configMap.Annotations != nil {
-		if namespaces, exists := configMap.Annotations[SyncConfigMapAnnotation+"/namespaces"]; exists {
+		if namespaces, exists := configMap.Annotations["flux-extension.nrfcloud.com/sync-configmap-namespaces"]; exists {
 			return strings.Split(namespaces, ","), nil
 		}
 	}
@@ -131,7 +131,7 @@ func (r *ConfigMapReconciler) shouldReceiveSync(namespace *corev1.Namespace, con
 	}
 
 	// Check if namespace has specific ConfigMap filters
-	if filter, exists := namespace.Annotations[SyncTargetAnnotation+"/configmaps"]; exists {
+	if filter, exists := namespace.Annotations["flux-extension.nrfcloud.com/sync-target-configmaps"]; exists {
 		allowedConfigMaps := strings.Split(filter, ",")
 		for _, allowed := range allowedConfigMaps {
 			if strings.TrimSpace(allowed) == configMap.Name {

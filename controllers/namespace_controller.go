@@ -109,7 +109,7 @@ func (r *NamespaceReconciler) shouldSyncConfigMap(configMap *corev1.ConfigMap) b
 func (r *NamespaceReconciler) shouldSyncToNamespace(namespace *corev1.Namespace, configMap *corev1.ConfigMap) bool {
 	// Check if ConfigMap has specific namespace targets first
 	if configMap.Annotations != nil {
-		if namespaces, exists := configMap.Annotations[SyncConfigMapAnnotation+"/namespaces"]; exists {
+		if namespaces, exists := configMap.Annotations["flux-extension.nrfcloud.com/sync-configmap-namespaces"]; exists {
 			targetNamespaces := splitAndTrim(namespaces, ",")
 			for _, target := range targetNamespaces {
 				if target == namespace.Name {
@@ -132,7 +132,7 @@ func (r *NamespaceReconciler) shouldSyncToNamespace(namespace *corev1.Namespace,
 	}
 
 	// Check if namespace has specific ConfigMap filters
-	if filter, exists := namespace.Annotations[SyncTargetAnnotation+"/configmaps"]; exists {
+	if filter, exists := namespace.Annotations["flux-extension.nrfcloud.com/sync-target-configmaps"]; exists {
 		allowedConfigMaps := splitAndTrim(filter, ",")
 		for _, allowed := range allowedConfigMaps {
 			if allowed == configMap.Name {
