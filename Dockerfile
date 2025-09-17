@@ -1,5 +1,5 @@
 # Build the manager binary
-FROM golang:1.21-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 # Install ca-certificates and git
 RUN apk add --no-cache ca-certificates git
