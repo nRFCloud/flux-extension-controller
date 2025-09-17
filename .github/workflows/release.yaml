@@ -142,7 +142,10 @@ jobs:
       run: |
         echo "name=${GITHUB_REPOSITORY,,}" >> $GITHUB_OUTPUT
 
-    - name: Package and push Helm chart to OCI registry
+    - name: Package Helm chart
       run: |
         helm package chart --version ${{ steps.version.outputs.version }} --app-version ${{ steps.version.outputs.version }}
-        helm push flux-extension-controller-${{ steps.version.outputs.version }}.tgz oci://${{ env.registry }}/charts/
+
+    - name: Push Helm chart to OCI registry
+      run: |
+        helm push flux-extension-controller-${{ steps.version.outputs.version }}.tgz oci://${{ env.REGISTRY }}/charts/
