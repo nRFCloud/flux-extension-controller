@@ -1,0 +1,16 @@
+# Example configuration for development
+github:
+  appId: 123456  # Replace with your GitHub App ID
+  privateKeyPath: "/etc/github/private-key"
+  organization: "nrfcloud"
+
+controller:
+  excludedNamespaces:
+    - "flux-system"
+    - "kube-system"
+    - "kube-public"
+  watchAllNamespaces: true
+
+tokenRefresh:
+  refreshInterval: "50m"
+  tokenLifetime: "60m"

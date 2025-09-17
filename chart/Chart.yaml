@@ -1,0 +1,18 @@
+apiVersion: v2
+name: flux-extension-controller
+description: A Helm chart for Flux Extension Controller that manages GitHub tokens for GitRepository resources
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - flux
+  - github
+  - kubernetes
+  - controller
+home: https://github.com/nrfcloud/flux-extension-controller
+sources:
+  - https://github.com/nrfcloud/flux-extension-controller
+maintainers:
+  - name: NRF Cloud Team
+    email: support@nrfcloud.com
+

@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "flux-extension-controller.fullname" . }}-config
+  labels:
+    {{- include "flux-extension-controller.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    github:
+      appId: {{ .Values.github.appId }}
+      privateKeyPath: "/etc/github/private-key"
+      organization: "{{ .Values.controller.organization }}"
+    controller:
+      excludedNamespaces:
+        {{- range .Values.controller.excludedNamespaces }}
+        - {{ . | quote }}
+        {{- end }}
+      watchAllNamespaces: {{ .Values.controller.watchAllNamespaces }}
+    tokenRefresh:
+      refreshInterval: {{ .Values.controller.tokenRefresh.refreshInterval }}
+      tokenLifetime: {{ .Values.controller.tokenRefresh.tokenLifetime }}
+

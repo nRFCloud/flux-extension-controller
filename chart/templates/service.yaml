@@ -1,0 +1,40 @@
+{{- if .Values.metrics.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "flux-extension-controller.fullname" . }}-metrics-service
+  labels:
+    {{- include "flux-extension-controller.labels" . | nindent 4 }}
+spec:
+  ports:
+  - name: https
+    port: 8443
+    protocol: TCP
+    targetPort: https
+  selector:
+    {{- include "flux-extension-controller.selectorLabels" . | nindent 4 }}
+---
+{{- if .Values.metrics.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "flux-extension-controller.fullname" . }}
+  labels:
+    {{- include "flux-extension-controller.labels" . | nindent 4 }}
+    {{- with .Values.metrics.serviceMonitor.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  endpoints:
+  - path: /metrics
+    port: https
+    scheme: https
+    bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+    tlsConfig:
+      insecureSkipVerify: true
+  selector:
+    matchLabels:
+      {{- include "flux-extension-controller.selectorLabels" . | nindent 6 }}
+{{- end }}
+{{- end }}
+
