@@ -3,6 +3,13 @@ name: CI
 on:
   push:
     branches: [ main ]
+    paths-ignore:
+      - renovate.json
+      - .github/workflows/release.yaml
+      - README.md
+      - LICENSE
+      - .gitignore
+      - config.yaml.example
   pull_request:
     branches: [ main ]
 
