@@ -53,6 +53,3 @@ config.yaml
 # Coverage files
 cover.out
 coverage.txt
-
-# Docker build context
-.dockerignore
