@@ -3,7 +3,7 @@ package github
 import (
 	"context"
 
-	"github.com/google/go-github/v57/github"
+	"github.com/google/go-github/v74/github"
 )
 
 // GitHubClient interface defines the methods needed for GitHub operations

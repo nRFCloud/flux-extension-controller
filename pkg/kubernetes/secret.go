@@ -12,7 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	"github.com/google/go-github/v57/github"
+	"github.com/google/go-github/v74/github"
 )
 
 const (
