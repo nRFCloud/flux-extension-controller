@@ -5,7 +5,7 @@
 replicaCount: 1
 
 image:
-  repository: nrfcloud/flux-extension-controller
+  repository: ghcr.io/nrfcloud/flux-extension-controller
   pullPolicy: IfNotPresent
   tag: "latest"
 
