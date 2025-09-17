@@ -73,8 +73,8 @@ func TestConfigMapReconciler_Reconcile(t *testing.T) {
 					Name:      "specific-config",
 					Namespace: FluxSystemNamespace,
 					Annotations: map[string]string{
-						SyncConfigMapAnnotation:                 "true",
-						SyncConfigMapAnnotation + "/namespaces": "target-ns-1,target-ns-3",
+						SyncConfigMapAnnotation:                                 "true",
+						"flux-extension.nrfcloud.com/sync-configmap-namespaces": "target-ns-1,target-ns-3",
 					},
 				},
 				Data: map[string]string{
@@ -285,8 +285,8 @@ func TestConfigMapReconciler_shouldReceiveSync(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "target-ns",
 					Annotations: map[string]string{
-						SyncTargetAnnotation:                 "true",
-						SyncTargetAnnotation + "/configmaps": "test-config,other-config",
+						SyncTargetAnnotation: "true",
+						"flux-extension.nrfcloud.com/sync-target-configmaps": "test-config,other-config",
 					},
 				},
 			},
@@ -298,8 +298,8 @@ func TestConfigMapReconciler_shouldReceiveSync(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "target-ns",
 					Annotations: map[string]string{
-						SyncTargetAnnotation:                 "true",
-						SyncTargetAnnotation + "/configmaps": "other-config,another-config",
+						SyncTargetAnnotation: "true",
+						"flux-extension.nrfcloud.com/sync-target-configmaps": "other-config,another-config",
 					},
 				},
 			},
