@@ -100,11 +100,11 @@ jobs:
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
+      if: github.ref_type == 'tag'
       with:
         files: |
           flux-extension-controller-${{ steps.version.outputs.version }}.tgz
         generate_release_notes: true
-        make_latest: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
