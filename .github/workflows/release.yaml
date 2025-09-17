@@ -107,6 +107,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
 
     steps:
     - name: Checkout
@@ -148,4 +149,4 @@ jobs:
 
     - name: Push Helm chart to OCI registry
       run: |
-        helm push flux-extension-controller-${{ steps.version.outputs.version }}.tgz oci://${{ env.REGISTRY }}/charts/
+        helm push flux-extension-controller-${{ steps.version.outputs.version }}.tgz oci://${{ env.REGISTRY }}/${{ steps.image_name.outputs.name }}/
