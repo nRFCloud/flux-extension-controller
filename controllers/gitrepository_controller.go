@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"strings"
 	"time"
 
@@ -14,7 +15,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	sourcev1 "github.com/fluxcd/source-controller/api/v1"
@@ -188,7 +188,7 @@ func (r *GitRepositoryReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	// Initialize secret manager
 	r.secretManager = kubernetes.NewSecretManager(r.Client)
 
-	// Initialize refresh manager
+	// Initialize refresh manager (but don't start it yet)
 	r.refreshManager = token.NewRefreshManager(
 		r.Client,
 		r.githubClient,
@@ -197,23 +197,29 @@ func (r *GitRepositoryReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		r.logger,
 	)
 
-	// Start refresh manager
-	ctx := context.Background()
-	if err := r.refreshManager.Start(ctx); err != nil {
-		return fmt.Errorf("failed to start refresh manager: %w", err)
-	}
-
 	// Create predicate to filter events
 	namespacePredicate := predicate.NewPredicateFuncs(func(object client.Object) bool {
 		return !r.isNamespaceExcluded(object.GetNamespace())
 	})
 
-	// Build and return the controller
-	return ctrl.NewControllerManagedBy(mgr).
+	// Build the controller
+	controllerBuilder := ctrl.NewControllerManagedBy(mgr).
 		For(&sourcev1.GitRepository{}).
-		WithOptions(controller.Options{
-			MaxConcurrentReconciles: 5,
-		}).
-		WithEventFilter(namespacePredicate).
-		Complete(r)
+		WithEventFilter(namespacePredicate)
+
+	// Add a runnable to start the refresh manager after the manager starts
+	err = mgr.Add(manager.RunnableFunc(func(ctx context.Context) error {
+		// Wait for the cache to sync before starting the refresh manager
+		if !mgr.GetCache().WaitForCacheSync(ctx) {
+			return fmt.Errorf("failed to wait for cache sync")
+		}
+
+		r.logger.Info("Cache synced, starting refresh manager")
+		return r.refreshManager.Start(ctx)
+	}))
+	if err != nil {
+		return fmt.Errorf("failed to add refresh manager runnable: %w", err)
+	}
+
+	return controllerBuilder.Complete(r)
 }
