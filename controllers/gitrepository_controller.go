@@ -75,6 +75,12 @@ func (r *GitRepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{RequeueAfter: 5 * time.Minute}, nil
 	}
 
+	// Skip secret generation if provider is set to 'github'
+	if gitRepo.Spec.Provider == "github" {
+		logger.V(1).Info("Skipping secret generation for GitRepository with provider 'github'")
+		return ctrl.Result{}, nil
+	}
+
 	// Check if secretRef is specified
 	if gitRepo.Spec.SecretRef == nil {
 		logger.V(1).Info("No secretRef specified, skipping")
