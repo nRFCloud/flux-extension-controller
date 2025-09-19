@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -475,6 +476,125 @@ func TestGitRepositoryReconciler_Reconcile_DeletedResource(t *testing.T) {
 	assert.Equal(t, ctrl.Result{}, result)
 
 	mockRefreshManager.AssertExpectations(t)
+}
+
+func TestGitRepositoryReconciler_Reconcile_SkipProviderGitHub(t *testing.T) {
+	s := scheme.Scheme
+	require.NoError(t, sourcev1.AddToScheme(s))
+
+	gitRepo := &sourcev1.GitRepository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-repo",
+			Namespace: "default",
+		},
+		Spec: sourcev1.GitRepositorySpec{
+			URL:      "https://github.com/testorg/test-repository",
+			Provider: "github", // This should cause the controller to skip secret generation
+			SecretRef: &meta.LocalObjectReference{
+				Name: "test-secret",
+			},
+		},
+	}
+
+	fakeClient := fake.NewClientBuilder().WithScheme(s).WithObjects(gitRepo).Build()
+
+	cfg := &config.Config{
+		GitHub: config.GitHubConfig{
+			Organization: "testorg",
+		},
+		Controller: config.ControllerConfig{
+			ExcludedNamespaces: []string{"flux-system"},
+		},
+	}
+
+	mockGitHubClient := &MockGitHubClient{}
+	mockGitHubClient.On("ValidateRepositoryURL", "https://github.com/testorg/test-repository").Return(nil)
+
+	reconciler := &GitRepositoryReconciler{
+		Client:       fakeClient,
+		Scheme:       s,
+		Config:       cfg,
+		githubClient: mockGitHubClient,
+		logger:       logr.Discard(),
+	}
+
+	// Test reconciliation
+	ctx := context.Background()
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "test-repo",
+			Namespace: "default",
+		},
+	}
+
+	result, err := reconciler.Reconcile(ctx, req)
+	require.NoError(t, err)
+	assert.Equal(t, ctrl.Result{}, result)
+
+	// Verify secret was NOT created (since provider is 'github')
+	secret := &corev1.Secret{}
+	err = fakeClient.Get(ctx, types.NamespacedName{
+		Name:      "test-secret",
+		Namespace: "default",
+	}, secret)
+	// Should get NotFound error since no secret should be created
+	assert.True(t, err != nil && strings.Contains(err.Error(), "not found"))
+
+	mockGitHubClient.AssertExpectations(t)
+}
+
+func TestGitRepositoryReconciler_Reconcile_SkipProviderGitHubNoSecretRef(t *testing.T) {
+	s := scheme.Scheme
+	require.NoError(t, sourcev1.AddToScheme(s))
+
+	gitRepo := &sourcev1.GitRepository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-repo",
+			Namespace: "default",
+		},
+		Spec: sourcev1.GitRepositorySpec{
+			URL:      "https://github.com/testorg/test-repository",
+			Provider: "github", // This should cause the controller to skip secret generation
+			// No SecretRef specified
+		},
+	}
+
+	fakeClient := fake.NewClientBuilder().WithScheme(s).WithObjects(gitRepo).Build()
+
+	cfg := &config.Config{
+		GitHub: config.GitHubConfig{
+			Organization: "testorg",
+		},
+		Controller: config.ControllerConfig{
+			ExcludedNamespaces: []string{"flux-system"},
+		},
+	}
+
+	mockGitHubClient := &MockGitHubClient{}
+	mockGitHubClient.On("ValidateRepositoryURL", "https://github.com/testorg/test-repository").Return(nil)
+
+	reconciler := &GitRepositoryReconciler{
+		Client:       fakeClient,
+		Scheme:       s,
+		Config:       cfg,
+		githubClient: mockGitHubClient,
+		logger:       logr.Discard(),
+	}
+
+	// Test reconciliation
+	ctx := context.Background()
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "test-repo",
+			Namespace: "default",
+		},
+	}
+
+	result, err := reconciler.Reconcile(ctx, req)
+	require.NoError(t, err)
+	assert.Equal(t, ctrl.Result{}, result)
+
+	mockGitHubClient.AssertExpectations(t)
 }
 
 func TestIsNamespaceExcluded(t *testing.T) {
