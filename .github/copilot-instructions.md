@@ -12,12 +12,9 @@ Run these commands in order - all have been validated to work:
 - `go version` -- should show Go 1.25+
 - `make deps` -- downloads dependencies (takes ~30 seconds, sets timeout to 60 seconds)
 - `make build` -- builds the manager binary (takes ~1 second, sets timeout to 30 seconds)
-- `make test` -- runs all tests WITHOUT coverage profile to avoid covdata issues (takes ~2 seconds, sets timeout to 60 seconds)
-
-**NEVER use `make test` with coverage profile** - use individual test commands instead:
 - `go fmt ./...` -- formats code
-- `go vet ./...` -- runs static analysis 
-- `go test ./...` -- runs tests without coverage (avoids covdata tool error)
+- `go vet ./...` -- runs static analysis
+- `go test ./...` -- runs tests without coverage (avoids covdata tool error; do not use coverage flags)
 
 ### Helm Chart Validation
 - `make helm-lint` -- lints the Helm chart (takes <1 second, sets timeout to 30 seconds)
