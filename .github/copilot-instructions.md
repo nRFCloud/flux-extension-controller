@@ -61,7 +61,7 @@ Always run before committing:
 
 ### Project Structure
 ```
-/home/runner/work/flux-extension-controller/flux-extension-controller/
+./   # (repo root)
 ├── cmd/manager/main.go          # Main application entry point
 ├── controllers/                 # Kubernetes controllers (7 Go files)
 │   ├── configmap_controller.go     # ConfigMap synchronization logic
