@@ -64,7 +64,7 @@ Always run before committing:
 │   ├── configmap_controller.go     # ConfigMap synchronization logic
 │   ├── gitrepository_controller.go # GitHub token management logic
 │   └── namespace_controller.go     # Namespace watching logic
-├── pkg/                        # Core packages (18 Go files total)
+├── pkg/                        # Core packages (18 Go files in pkg/)
 │   ├── config/                     # Configuration management
 │   ├── github/                     # GitHub API integration
 │   ├── kubernetes/                 # Kubernetes client utilities
