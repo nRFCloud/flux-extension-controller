@@ -478,72 +478,90 @@ func TestGitRepositoryReconciler_Reconcile_DeletedResource(t *testing.T) {
 	mockRefreshManager.AssertExpectations(t)
 }
 
-func TestGitRepositoryReconciler_Reconcile_SkipProviderGitHub(t *testing.T) {
+func TestGitRepositoryReconciler_Reconcile_SkipNonGenericProviders(t *testing.T) {
 	s := scheme.Scheme
 	require.NoError(t, sourcev1.AddToScheme(s))
 
-	gitRepo := &sourcev1.GitRepository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-repo",
-			Namespace: "default",
+	testCases := []struct {
+		name     string
+		provider string
+	}{
+		{
+			name:     "skip provider github",
+			provider: "github",
 		},
-		Spec: sourcev1.GitRepositorySpec{
-			URL:      "https://github.com/testorg/test-repository",
-			Provider: "github", // This should cause the controller to skip secret generation
-			SecretRef: &meta.LocalObjectReference{
-				Name: "test-secret",
-			},
-		},
-	}
-
-	fakeClient := fake.NewClientBuilder().WithScheme(s).WithObjects(gitRepo).Build()
-
-	cfg := &config.Config{
-		GitHub: config.GitHubConfig{
-			Organization: "testorg",
-		},
-		Controller: config.ControllerConfig{
-			ExcludedNamespaces: []string{"flux-system"},
+		{
+			name:     "skip provider azure",
+			provider: "azure",
 		},
 	}
 
-	mockGitHubClient := &MockGitHubClient{}
-	mockGitHubClient.On("ValidateRepositoryURL", "https://github.com/testorg/test-repository").Return(nil)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			gitRepo := &sourcev1.GitRepository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+				Spec: sourcev1.GitRepositorySpec{
+					URL:      "https://github.com/testorg/test-repository",
+					Provider: tc.provider, // This should cause the controller to skip secret generation
+					SecretRef: &meta.LocalObjectReference{
+						Name: "test-secret",
+					},
+				},
+			}
 
-	reconciler := &GitRepositoryReconciler{
-		Client:       fakeClient,
-		Scheme:       s,
-		Config:       cfg,
-		githubClient: mockGitHubClient,
-		logger:       logr.Discard(),
+			fakeClient := fake.NewClientBuilder().WithScheme(s).WithObjects(gitRepo).Build()
+
+			cfg := &config.Config{
+				GitHub: config.GitHubConfig{
+					Organization: "testorg",
+				},
+				Controller: config.ControllerConfig{
+					ExcludedNamespaces: []string{"flux-system"},
+				},
+			}
+
+			mockGitHubClient := &MockGitHubClient{}
+			mockGitHubClient.On("ValidateRepositoryURL", "https://github.com/testorg/test-repository").Return(nil)
+
+			reconciler := &GitRepositoryReconciler{
+				Client:       fakeClient,
+				Scheme:       s,
+				Config:       cfg,
+				githubClient: mockGitHubClient,
+				logger:       logr.Discard(),
+			}
+
+			// Test reconciliation
+			ctx := context.Background()
+			req := reconcile.Request{
+				NamespacedName: types.NamespacedName{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+			}
+
+			result, err := reconciler.Reconcile(ctx, req)
+			require.NoError(t, err)
+			assert.Equal(t, ctrl.Result{}, result)
+
+			// Verify secret was NOT created (since provider is non-generic)
+			secret := &corev1.Secret{}
+			err = fakeClient.Get(ctx, types.NamespacedName{
+				Name:      "test-secret",
+				Namespace: "default",
+			}, secret)
+			// Should get NotFound error since no secret should be created
+			assert.True(t, err != nil && strings.Contains(err.Error(), "not found"))
+
+			mockGitHubClient.AssertExpectations(t)
+		})
 	}
-
-	// Test reconciliation
-	ctx := context.Background()
-	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      "test-repo",
-			Namespace: "default",
-		},
-	}
-
-	result, err := reconciler.Reconcile(ctx, req)
-	require.NoError(t, err)
-	assert.Equal(t, ctrl.Result{}, result)
-
-	// Verify secret was NOT created (since provider is 'github')
-	secret := &corev1.Secret{}
-	err = fakeClient.Get(ctx, types.NamespacedName{
-		Name:      "test-secret",
-		Namespace: "default",
-	}, secret)
-	// Should get NotFound error since no secret should be created
-	assert.True(t, err != nil && strings.Contains(err.Error(), "not found"))
-
-	mockGitHubClient.AssertExpectations(t)
 }
 
-func TestGitRepositoryReconciler_Reconcile_SkipProviderGitHubNoSecretRef(t *testing.T) {
+func TestGitRepositoryReconciler_Reconcile_SkipNonGenericProvidersNoSecretRef(t *testing.T) {
 	s := scheme.Scheme
 	require.NoError(t, sourcev1.AddToScheme(s))
 
@@ -595,6 +613,103 @@ func TestGitRepositoryReconciler_Reconcile_SkipProviderGitHubNoSecretRef(t *test
 	assert.Equal(t, ctrl.Result{}, result)
 
 	mockGitHubClient.AssertExpectations(t)
+}
+
+func TestGitRepositoryReconciler_Reconcile_GenericProviderStillWorks(t *testing.T) {
+	s := scheme.Scheme
+	require.NoError(t, sourcev1.AddToScheme(s))
+
+	testCases := []struct {
+		name     string
+		provider string
+	}{
+		{
+			name:     "explicit generic provider",
+			provider: "generic",
+		},
+		{
+			name:     "empty provider (defaults to generic)",
+			provider: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			gitRepo := &sourcev1.GitRepository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+				Spec: sourcev1.GitRepositorySpec{
+					URL:      "https://github.com/testorg/test-repository",
+					Provider: tc.provider, // Generic provider should still generate secrets
+					SecretRef: &meta.LocalObjectReference{
+						Name: "test-secret",
+					},
+				},
+			}
+
+			fakeClient := fake.NewClientBuilder().WithScheme(s).WithObjects(gitRepo).Build()
+
+			cfg := &config.Config{
+				GitHub: config.GitHubConfig{
+					Organization: "testorg",
+				},
+				Controller: config.ControllerConfig{
+					ExcludedNamespaces: []string{"flux-system"},
+				},
+			}
+
+			mockToken := &github.InstallationToken{
+				Token:     github.String("test-token-123"),
+				ExpiresAt: &github.Timestamp{Time: time.Now().Add(time.Hour)},
+			}
+
+			mockGitHubClient := &MockGitHubClient{}
+			mockGitHubClient.On("ValidateRepositoryURL", "https://github.com/testorg/test-repository").Return(nil)
+			mockGitHubClient.On("GenerateInstallationToken", mock.Anything, "https://github.com/testorg/test-repository").Return(mockToken, nil)
+
+			mockRefreshManager := &MockRefreshManager{}
+			mockRefreshManager.On("ScheduleRefresh", mock.Anything, "default", "test-secret", "https://github.com/testorg/test-repository").Return(nil)
+
+			reconciler := &GitRepositoryReconciler{
+				Client:         fakeClient,
+				Scheme:         s,
+				Config:         cfg,
+				githubClient:   mockGitHubClient,
+				secretManager:  kubernetes.NewSecretManager(fakeClient),
+				refreshManager: mockRefreshManager,
+				logger:         logr.Discard(),
+			}
+
+			// Test reconciliation
+			ctx := context.Background()
+			req := reconcile.Request{
+				NamespacedName: types.NamespacedName{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+			}
+
+			result, err := reconciler.Reconcile(ctx, req)
+			require.NoError(t, err)
+			assert.Equal(t, ctrl.Result{RequeueAfter: 30 * time.Minute}, result)
+
+			// Verify secret WAS created (since provider is generic)
+			secret := &corev1.Secret{}
+			err = fakeClient.Get(ctx, types.NamespacedName{
+				Name:      "test-secret",
+				Namespace: "default",
+			}, secret)
+			require.NoError(t, err)
+
+			assert.Equal(t, []byte("git"), secret.Data["username"])
+			assert.Equal(t, []byte("test-token-123"), secret.Data["password"])
+
+			mockGitHubClient.AssertExpectations(t)
+			mockRefreshManager.AssertExpectations(t)
+		})
+	}
 }
 
 func TestIsNamespaceExcluded(t *testing.T) {
