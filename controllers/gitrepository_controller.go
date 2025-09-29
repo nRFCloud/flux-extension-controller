@@ -75,6 +75,12 @@ func (r *GitRepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{RequeueAfter: 5 * time.Minute}, nil
 	}
 
+	// Skip secret generation if provider is not 'generic' (i.e., 'github' or 'azure')
+	if gitRepo.Spec.Provider != "" && gitRepo.Spec.Provider != "generic" {
+		logger.V(1).Info("Skipping secret generation for GitRepository with non-generic provider", "provider", gitRepo.Spec.Provider)
+		return ctrl.Result{}, nil
+	}
+
 	// Check if secretRef is specified
 	if gitRepo.Spec.SecretRef == nil {
 		logger.V(1).Info("No secretRef specified, skipping")
