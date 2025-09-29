@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"context"
-	"strings"
 	"testing"
 	"time"
 
@@ -12,6 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -554,7 +554,7 @@ func TestGitRepositoryReconciler_Reconcile_SkipNonGenericProviders(t *testing.T)
 				Namespace: "default",
 			}, secret)
 			// Should get NotFound error since no secret should be created
-			assert.True(t, err != nil && strings.Contains(err.Error(), "not found"))
+			assert.True(t, apierrors.IsNotFound(err))
 
 			mockGitHubClient.AssertExpectations(t)
 		})
