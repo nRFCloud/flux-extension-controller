@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"strings"
 	"time"
+
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -95,6 +96,23 @@ func (r *GitRepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		logger.Error(err, "Secret ownership validation failed")
 		r.updateGitRepositoryStatus(ctx, gitRepo, metav1.ConditionFalse, "SecretValidationFailed", err.Error())
 		return ctrl.Result{RequeueAfter: 5 * time.Minute}, nil
+	}
+
+	// Check if existing secret has a valid token
+	existingSecret, err := r.secretManager.GetSecret(ctx, secretNamespace, secretName)
+	if err == nil && r.secretManager.IsSecretManagedByController(existingSecret) {
+		expiry, err := r.secretManager.GetTokenExpiry(existingSecret)
+		if err == nil {
+			refreshThreshold := r.Config.TokenRefresh.RefreshInterval
+			if time.Until(expiry) > refreshThreshold {
+				logger.V(1).Info("Token still valid, skipping regeneration", "expiresAt", expiry)
+				// Schedule token refresh as usual
+				if err := r.refreshManager.ScheduleRefresh(ctx, secretNamespace, secretName, gitRepo.Spec.URL); err != nil {
+					logger.Error(err, "Failed to schedule token refresh")
+				}
+				return ctrl.Result{RequeueAfter: time.Until(expiry) - 5*time.Minute}, nil
+			}
+		}
 	}
 
 	// Generate GitHub installation token
