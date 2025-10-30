@@ -854,3 +854,97 @@ func TestIsTargetOrganizationRepository(t *testing.T) {
 		})
 	}
 }
+
+func TestGitRepositoryReconciler_Reconcile_SkipsRegenerationIfTokenValid(t *testing.T) {
+	s := scheme.Scheme
+	require.NoError(t, sourcev1.AddToScheme(s))
+
+	// Set up a valid token expiry in the future
+	expiresAt := time.Now().Add(1 * time.Hour)
+	refreshInterval := 30 * time.Minute
+
+	gitRepo := &sourcev1.GitRepository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-repo",
+			Namespace: "default",
+		},
+		Spec: sourcev1.GitRepositorySpec{
+			URL: "https://github.com/testorg/test-repository",
+			SecretRef: &meta.LocalObjectReference{
+				Name: "test-secret",
+			},
+		},
+	}
+
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-secret",
+			Namespace: "default",
+			Annotations: map[string]string{
+				kubernetes.AnnotationManagedBy:     "flux-extension-controller",
+				kubernetes.AnnotationTokenExpiry:   expiresAt.Format(time.RFC3339),
+				kubernetes.AnnotationRepositoryURL: "https://github.com/testorg/test-repository",
+			},
+		},
+		Data: map[string][]byte{
+			"username": []byte("git"),
+			"password": []byte("existing-token"),
+		},
+		Type: kubernetes.SecretTypeGitRepository,
+	}
+
+	fakeClient := fake.NewClientBuilder().WithScheme(s).WithObjects(gitRepo, secret).Build()
+
+	cfg := &config.Config{
+		GitHub: config.GitHubConfig{
+			Organization: "testorg",
+		},
+		Controller: config.ControllerConfig{
+			ExcludedNamespaces: []string{"flux-system"},
+		},
+		TokenRefresh: config.TokenRefreshConfig{
+			RefreshInterval: refreshInterval,
+		},
+	}
+
+	mockGitHubClient := &MockGitHubClient{}
+	// ValidateRepositoryURL should be called, but GenerateInstallationToken should NOT be called
+	mockGitHubClient.On("ValidateRepositoryURL", "https://github.com/testorg/test-repository").Return(nil)
+
+	mockRefreshManager := &MockRefreshManager{}
+	mockRefreshManager.On("ScheduleRefresh", mock.Anything, "default", "test-secret", "https://github.com/testorg/test-repository").Return(nil)
+
+	reconciler := &GitRepositoryReconciler{
+		Client:         fakeClient,
+		Scheme:         s,
+		Config:         cfg,
+		githubClient:   mockGitHubClient,
+		secretManager:  kubernetes.NewSecretManager(fakeClient),
+		refreshManager: mockRefreshManager,
+		logger:         logr.Discard(),
+	}
+
+	ctx := context.Background()
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "test-repo",
+			Namespace: "default",
+		},
+	}
+
+	result, err := reconciler.Reconcile(ctx, req)
+	require.NoError(t, err)
+	// Should requeue just before expiry minus 5 minutes
+	expectedRequeue := time.Until(expiresAt) - 5*time.Minute
+	assert.InDelta(t, expectedRequeue.Seconds(), result.RequeueAfter.Seconds(), 2.0) // allow 2s drift
+
+	// Secret should not be changed
+	var updatedSecret corev1.Secret
+	err = fakeClient.Get(ctx, types.NamespacedName{Name: "test-secret", Namespace: "default"}, &updatedSecret)
+	require.NoError(t, err)
+	assert.Equal(t, []byte("existing-token"), updatedSecret.Data["password"])
+
+	// GenerateInstallationToken should NOT be called
+	mockGitHubClient.AssertNotCalled(t, "GenerateInstallationToken", mock.Anything, mock.Anything)
+	mockRefreshManager.AssertExpectations(t)
+}
