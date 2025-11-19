@@ -3,17 +3,17 @@ module github.com/nrfcloud/flux-extension-controller
 go 1.25.0
 
 require (
-	github.com/fluxcd/pkg/apis/meta v1.22.0
-	github.com/fluxcd/source-controller/api v1.7.3
+	github.com/fluxcd/pkg/apis/meta v1.23.0
+	github.com/fluxcd/source-controller/api v1.7.4
 	github.com/go-logr/logr v1.4.3
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/go-github/v76 v76.0.0
 	github.com/stretchr/testify v1.11.1
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.34.1
-	k8s.io/apimachinery v0.34.1
+	k8s.io/apimachinery v0.34.2
 	k8s.io/client-go v0.34.1
-	sigs.k8s.io/controller-runtime v0.22.3
+	sigs.k8s.io/controller-runtime v0.22.4
 )
 
 require (
