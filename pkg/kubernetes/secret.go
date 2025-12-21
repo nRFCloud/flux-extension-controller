@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -27,6 +28,11 @@ const (
 
 	// AnnotationRepositoryURL stores the repository URL
 	AnnotationRepositoryURL = "flux-extension-controller.nrfcloud.com/repository-url"
+)
+
+var (
+	// ErrSecretNotManagedByController indicates a secret exists but is not managed by this controller
+	ErrSecretNotManagedByController = errors.New("secret exists but is not managed by flux-extension-controller")
 )
 
 // SecretManager handles Kubernetes secret operations for Git repositories
@@ -163,7 +169,7 @@ func (sm *SecretManager) ValidateSecretOwnership(ctx context.Context, namespace,
 
 	// Check if it's managed by this controller
 	if !sm.IsSecretManagedByController(secret) {
-		return fmt.Errorf("secret %s/%s exists but is not managed by flux-extension-controller", namespace, name)
+		return fmt.Errorf("%w: %s/%s", ErrSecretNotManagedByController, namespace, name)
 	}
 
 	// Check if it's for the same repository

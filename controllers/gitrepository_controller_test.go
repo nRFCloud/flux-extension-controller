@@ -1105,3 +1105,97 @@ func TestGitRepositoryReconciler_Reconcile_NoSecretRefNoStatusUpdate(t *testing.
 	// ValidateRepositoryURL should NOT have been called
 	mockGitHubClient.AssertNotCalled(t, "ValidateRepositoryURL", mock.Anything)
 }
+
+func TestGitRepositoryReconciler_Reconcile_SkipSecretManagedByOtherSystem(t *testing.T) {
+	s := scheme.Scheme
+	require.NoError(t, sourcev1.AddToScheme(s))
+
+	// Create a secret that exists but is not managed by this controller (e.g., managed by Flux)
+	existingSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "flux-system",
+			Namespace: "flux-system",
+			// No annotations from flux-extension-controller
+			Annotations: map[string]string{
+				"some-other-annotation": "value",
+			},
+		},
+		Data: map[string][]byte{
+			"username": []byte("git"),
+			"password": []byte("existing-token"),
+		},
+		Type: corev1.SecretTypeOpaque,
+	}
+
+	gitRepo := &sourcev1.GitRepository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "flux-system",
+			Namespace: "flux-system",
+		},
+		Spec: sourcev1.GitRepositorySpec{
+			URL: "https://github.com/testorg/flux-system",
+			SecretRef: &meta.LocalObjectReference{
+				Name: "flux-system",
+			},
+		},
+	}
+
+	fakeClient := fake.NewClientBuilder().WithScheme(s).WithObjects(gitRepo, existingSecret).Build()
+
+	cfg := &config.Config{
+		GitHub: config.GitHubConfig{
+			Organization: "testorg",
+		},
+		Controller: config.ControllerConfig{
+			// Note: flux-system is NOT in excluded namespaces for this test
+			ExcludedNamespaces: []string{"kube-system"},
+		},
+	}
+
+	mockGitHubClient := &MockGitHubClient{}
+	mockGitHubClient.On("ValidateRepositoryURL", "https://github.com/testorg/flux-system").Return(nil)
+
+	reconciler := &GitRepositoryReconciler{
+		Client:        fakeClient,
+		Scheme:        s,
+		Config:        cfg,
+		githubClient:  mockGitHubClient,
+		secretManager: kubernetes.NewSecretManager(fakeClient),
+		logger:        logr.Discard(),
+	}
+
+	ctx := context.Background()
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "flux-system",
+			Namespace: "flux-system",
+		},
+	}
+
+	// Reconcile should skip this GitRepository since the secret is not managed by the controller
+	result, err := reconciler.Reconcile(ctx, req)
+	require.NoError(t, err)
+	assert.Equal(t, ctrl.Result{}, result)
+
+	// Verify the GitRepository status was NOT updated (no conditions set)
+	updatedGitRepo := &sourcev1.GitRepository{}
+	err = fakeClient.Get(ctx, types.NamespacedName{
+		Name:      "flux-system",
+		Namespace: "flux-system",
+	}, updatedGitRepo)
+	require.NoError(t, err)
+
+	// Status conditions should still be empty (not marked as failed)
+	assert.Empty(t, updatedGitRepo.Status.Conditions)
+
+	// Verify the secret was not modified
+	updatedSecret := &corev1.Secret{}
+	err = fakeClient.Get(ctx, types.NamespacedName{
+		Name:      "flux-system",
+		Namespace: "flux-system",
+	}, updatedSecret)
+	require.NoError(t, err)
+	assert.Equal(t, []byte("existing-token"), updatedSecret.Data["password"])
+
+	mockGitHubClient.AssertExpectations(t)
+}
