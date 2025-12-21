@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -93,6 +94,12 @@ func (r *GitRepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	// Validate secret ownership
 	if err := r.secretManager.ValidateSecretOwnership(ctx, secretNamespace, secretName, gitRepo.Spec.URL); err != nil {
+		// If the secret exists but is not managed by this controller, skip this GitRepository
+		// This allows other systems (like Flux itself) to manage their own secrets
+		if errors.Is(err, kubernetes.ErrSecretNotManagedByController) {
+			logger.V(1).Info("Skipping GitRepository with secret managed by another system", "secret", secretName)
+			return ctrl.Result{}, nil
+		}
 		logger.Error(err, "Secret ownership validation failed")
 		r.updateGitRepositoryStatus(ctx, gitRepo, metav1.ConditionFalse, "SecretValidationFailed", err.Error())
 		return ctrl.Result{RequeueAfter: 5 * time.Minute}, nil
