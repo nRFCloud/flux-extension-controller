@@ -17,6 +17,11 @@ Automatically synchronizes ConfigMaps from the `flux-system` namespace to target
 ### 🎯 Namespace-aware Operations
 Provides namespace-level control over which namespaces participate in ConfigMap synchronization and token management.
 
+### 🪝 GitHub Webhook Registration (Planned)
+Automatically registers and manages GitHub webhooks for Flux Receiver resources, eliminating manual webhook configuration and ensuring consistent webhook setup across repositories.
+
+**[📖 Full Webhook Registration Specification](docs/webhook-receiver-registration.md)** | **[📋 Feature Request Issue Template](docs/webhook-receiver-registration-issue.md)**
+
 ## Installation
 
 ### Prerequisites
