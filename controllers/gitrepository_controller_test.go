@@ -1067,7 +1067,7 @@ func TestGitRepositoryReconciler_Reconcile_NoSecretRefNoStatusUpdate(t *testing.
 	}
 
 	mockGitHubClient := &MockGitHubClient{}
-	// ValidateRepositoryURL should NOT be called since secretRef check happens first
+	// ValidateRepositoryURL should NOT be called since SecretRef check happens first
 
 	reconciler := &GitRepositoryReconciler{
 		Client:       fakeClient,
