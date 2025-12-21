@@ -3,6 +3,7 @@ module github.com/nrfcloud/flux-extension-controller
 go 1.25.0
 
 require (
+	github.com/fluxcd/notification-controller/api v1.7.5
 	github.com/fluxcd/pkg/apis/meta v1.23.0
 	github.com/fluxcd/source-controller/api v1.7.4
 	github.com/go-logr/logr v1.4.3
@@ -23,7 +24,6 @@ require (
 	github.com/emicklei/go-restful/v3 v3.12.2 // indirect
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/evanphx/json-patch/v5 v5.9.11 // indirect
-	github.com/fluxcd/notification-controller/api v1.7.5 // indirect
 	github.com/fluxcd/pkg/apis/acl v0.9.0 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
