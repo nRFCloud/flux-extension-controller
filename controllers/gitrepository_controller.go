@@ -69,13 +69,6 @@ func (r *GitRepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, nil
 	}
 
-	// Validate repository URL
-	if err := r.githubClient.ValidateRepositoryURL(gitRepo.Spec.URL); err != nil {
-		logger.Error(err, "Repository URL validation failed")
-		r.updateGitRepositoryStatus(ctx, gitRepo, metav1.ConditionFalse, "ValidationFailed", err.Error())
-		return ctrl.Result{RequeueAfter: 5 * time.Minute}, nil
-	}
-
 	// Skip secret generation if provider is not 'generic' (i.e., 'github' or 'azure')
 	if gitRepo.Spec.Provider != "" && gitRepo.Spec.Provider != "generic" {
 		logger.V(1).Info("Skipping secret generation for GitRepository with non-generic provider", "provider", gitRepo.Spec.Provider)
@@ -86,6 +79,13 @@ func (r *GitRepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if gitRepo.Spec.SecretRef == nil {
 		logger.V(1).Info("No secretRef specified, skipping")
 		return ctrl.Result{}, nil
+	}
+
+	// Validate repository URL
+	if err := r.githubClient.ValidateRepositoryURL(gitRepo.Spec.URL); err != nil {
+		logger.Error(err, "Repository URL validation failed")
+		r.updateGitRepositoryStatus(ctx, gitRepo, metav1.ConditionFalse, "ValidationFailed", err.Error())
+		return ctrl.Result{RequeueAfter: 5 * time.Minute}, nil
 	}
 
 	secretName := gitRepo.Spec.SecretRef.Name

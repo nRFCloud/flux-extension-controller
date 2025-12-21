@@ -289,7 +289,7 @@ func TestGitRepositoryReconciler_Reconcile_NoSecretRef(t *testing.T) {
 	}
 
 	mockGitHubClient := &MockGitHubClient{}
-	mockGitHubClient.On("ValidateRepositoryURL", "https://github.com/testorg/test-repository").Return(nil)
+	// ValidateRepositoryURL should NOT be called since secretRef check happens first
 
 	reconciler := &GitRepositoryReconciler{
 		Client:       fakeClient,
@@ -312,7 +312,8 @@ func TestGitRepositoryReconciler_Reconcile_NoSecretRef(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, ctrl.Result{}, result)
 
-	mockGitHubClient.AssertExpectations(t)
+	// ValidateRepositoryURL should NOT have been called
+	mockGitHubClient.AssertNotCalled(t, "ValidateRepositoryURL", mock.Anything)
 }
 
 func TestGitRepositoryReconciler_Reconcile_ValidationFailure(t *testing.T) {
@@ -524,7 +525,9 @@ func TestGitRepositoryReconciler_Reconcile_SkipNonGenericProviders(t *testing.T)
 			}
 
 			mockGitHubClient := &MockGitHubClient{}
-			mockGitHubClient.On("ValidateRepositoryURL", "https://github.com/testorg/test-repository").Return(nil)
+			// ValidateRepositoryURL should NOT be called: non-generic providers are managed by Flux
+			// itself and do not use this controller's GitHub token management, so the provider check
+			// short-circuits before any URL validation.
 
 			reconciler := &GitRepositoryReconciler{
 				Client:       fakeClient,
@@ -556,7 +559,8 @@ func TestGitRepositoryReconciler_Reconcile_SkipNonGenericProviders(t *testing.T)
 			// Should get NotFound error since no secret should be created
 			assert.True(t, apierrors.IsNotFound(err))
 
-			mockGitHubClient.AssertExpectations(t)
+			// ValidateRepositoryURL should NOT have been called
+			mockGitHubClient.AssertNotCalled(t, "ValidateRepositoryURL", mock.Anything)
 		})
 	}
 }
@@ -589,7 +593,9 @@ func TestGitRepositoryReconciler_Reconcile_SkipNonGenericProvidersNoSecretRef(t 
 	}
 
 	mockGitHubClient := &MockGitHubClient{}
-	mockGitHubClient.On("ValidateRepositoryURL", "https://github.com/testorg/test-repository").Return(nil)
+	// ValidateRepositoryURL should NOT be called: this test validates the combined case where
+	// both the provider is non-generic AND secretRef is missing. The provider check happens first
+	// and short-circuits, so validation never runs regardless of the missing secretRef.
 
 	reconciler := &GitRepositoryReconciler{
 		Client:       fakeClient,
@@ -612,7 +618,8 @@ func TestGitRepositoryReconciler_Reconcile_SkipNonGenericProvidersNoSecretRef(t 
 	require.NoError(t, err)
 	assert.Equal(t, ctrl.Result{}, result)
 
-	mockGitHubClient.AssertExpectations(t)
+	// ValidateRepositoryURL should NOT have been called
+	mockGitHubClient.AssertNotCalled(t, "ValidateRepositoryURL", mock.Anything)
 }
 
 func TestGitRepositoryReconciler_Reconcile_GenericProviderStillWorks(t *testing.T) {
@@ -947,4 +954,154 @@ func TestGitRepositoryReconciler_Reconcile_SkipsRegenerationIfTokenValid(t *test
 	// GenerateInstallationToken should NOT be called
 	mockGitHubClient.AssertNotCalled(t, "GenerateInstallationToken", mock.Anything, mock.Anything)
 	mockRefreshManager.AssertExpectations(t)
+}
+
+func TestGitRepositoryReconciler_Reconcile_NonGenericProviderNoStatusUpdate(t *testing.T) {
+	s := scheme.Scheme
+	require.NoError(t, sourcev1.AddToScheme(s))
+
+	testCases := []struct {
+		name     string
+		provider string
+	}{
+		{
+			name:     "github provider should not update status",
+			provider: "github",
+		},
+		{
+			name:     "azure provider should not update status",
+			provider: "azure",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			gitRepo := &sourcev1.GitRepository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+				Spec: sourcev1.GitRepositorySpec{
+					URL:      "https://github.com/testorg/test-repository",
+					Provider: tc.provider,
+					SecretRef: &meta.LocalObjectReference{
+						Name: "test-secret",
+					},
+				},
+			}
+
+			fakeClient := fake.NewClientBuilder().WithScheme(s).WithObjects(gitRepo).Build()
+
+			cfg := &config.Config{
+				GitHub: config.GitHubConfig{
+					Organization: "testorg",
+				},
+				Controller: config.ControllerConfig{
+					ExcludedNamespaces: []string{"flux-system"},
+				},
+			}
+
+			mockGitHubClient := &MockGitHubClient{}
+			// ValidateRepositoryURL should NOT be called since provider check happens first
+			// This is the key part of this test - we verify that validation doesn't happen
+
+			reconciler := &GitRepositoryReconciler{
+				Client:       fakeClient,
+				Scheme:       s,
+				Config:       cfg,
+				githubClient: mockGitHubClient,
+				logger:       logr.Discard(),
+			}
+
+			ctx := context.Background()
+			req := reconcile.Request{
+				NamespacedName: types.NamespacedName{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+			}
+
+			result, err := reconciler.Reconcile(ctx, req)
+			require.NoError(t, err)
+			assert.Equal(t, ctrl.Result{}, result)
+
+			// Verify no status was set (GitRepository status should remain unchanged)
+			updatedGitRepo := &sourcev1.GitRepository{}
+			err = fakeClient.Get(ctx, types.NamespacedName{
+				Name:      "test-repo",
+				Namespace: "default",
+			}, updatedGitRepo)
+			require.NoError(t, err)
+
+			// Status conditions should be empty since we never updated them
+			assert.Empty(t, updatedGitRepo.Status.Conditions)
+
+			// ValidateRepositoryURL should NOT have been called
+			mockGitHubClient.AssertNotCalled(t, "ValidateRepositoryURL", mock.Anything)
+		})
+	}
+}
+
+func TestGitRepositoryReconciler_Reconcile_NoSecretRefNoStatusUpdate(t *testing.T) {
+	s := scheme.Scheme
+	require.NoError(t, sourcev1.AddToScheme(s))
+
+	gitRepo := &sourcev1.GitRepository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-repo",
+			Namespace: "default",
+		},
+		Spec: sourcev1.GitRepositorySpec{
+			URL: "https://github.com/testorg/test-repository",
+			// No SecretRef specified, and default provider (generic)
+		},
+	}
+
+	fakeClient := fake.NewClientBuilder().WithScheme(s).WithObjects(gitRepo).Build()
+
+	cfg := &config.Config{
+		GitHub: config.GitHubConfig{
+			Organization: "testorg",
+		},
+		Controller: config.ControllerConfig{
+			ExcludedNamespaces: []string{"flux-system"},
+		},
+	}
+
+	mockGitHubClient := &MockGitHubClient{}
+	// ValidateRepositoryURL should NOT be called since SecretRef check happens first
+
+	reconciler := &GitRepositoryReconciler{
+		Client:       fakeClient,
+		Scheme:       s,
+		Config:       cfg,
+		githubClient: mockGitHubClient,
+		logger:       logr.Discard(),
+	}
+
+	ctx := context.Background()
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      "test-repo",
+			Namespace: "default",
+		},
+	}
+
+	result, err := reconciler.Reconcile(ctx, req)
+	require.NoError(t, err)
+	assert.Equal(t, ctrl.Result{}, result)
+
+	// Verify no status was set
+	updatedGitRepo := &sourcev1.GitRepository{}
+	err = fakeClient.Get(ctx, types.NamespacedName{
+		Name:      "test-repo",
+		Namespace: "default",
+	}, updatedGitRepo)
+	require.NoError(t, err)
+
+	// Status conditions should be empty
+	assert.Empty(t, updatedGitRepo.Status.Conditions)
+
+	// ValidateRepositoryURL should NOT have been called
+	mockGitHubClient.AssertNotCalled(t, "ValidateRepositoryURL", mock.Anything)
 }
