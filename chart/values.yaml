@@ -40,6 +40,12 @@ controller:
     enabled: null  # If null, leader election is enabled if replicaCount > 1
     id: "flux-extension-controller"  # Customizable leader election name
 
+# Webhook configuration
+webhook:
+  # Base URL for webhook endpoints (e.g., https://flux.example.com)
+  # Required when webhook feature is enabled by creating Receiver resources
+  baseURL: ""
+
 # GitHub App configuration
 github:
   # GitHub App ID (required)

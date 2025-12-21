@@ -15,6 +15,7 @@ type Config struct {
 	Controller     ControllerConfig     `yaml:"controller"`
 	LeaderElection LeaderElectionConfig `yaml:"leaderElection"`
 	TokenRefresh   TokenRefreshConfig   `yaml:"tokenRefresh"`
+	Webhook        WebhookConfig        `yaml:"webhook"`
 	Metrics        MetricsConfig        `yaml:"metrics"`
 	HealthProbe    HealthProbeConfig    `yaml:"healthProbe"`
 }
@@ -54,6 +55,11 @@ type MetricsConfig struct {
 // HealthProbeConfig holds health probe configuration
 type HealthProbeConfig struct {
 	Address string `yaml:"address"`
+}
+
+// WebhookConfig holds webhook configuration
+type WebhookConfig struct {
+	BaseURL string `yaml:"baseURL"`
 }
 
 // LoadConfig loads configuration from file and environment variables
@@ -132,6 +138,11 @@ func LoadConfig(configPath string) (*Config, error) {
 			return nil, fmt.Errorf("invalid REPLICAS: %w", err)
 		}
 		cfg.Controller.Replicas = count
+	}
+
+	// Override webhook settings from environment variables
+	if webhookBaseURL := os.Getenv("WEBHOOK_BASE_URL"); webhookBaseURL != "" {
+		cfg.Webhook.BaseURL = webhookBaseURL
 	}
 
 	// Automatically disable leader election if replicas <= 1
