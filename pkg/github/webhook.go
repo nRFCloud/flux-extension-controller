@@ -3,7 +3,6 @@ package github
 import (
 	"context"
 	"fmt"
-	"net/http"
 
 	"github.com/google/go-github/v76/github"
 )
@@ -19,41 +18,15 @@ func NewWebhookManager(client *Client) *WebhookManager {
 }
 
 // getAuthenticatedClient creates an authenticated GitHub client for the repository
+// by reusing the existing GenerateInstallationToken method
 func (w *WebhookManager) getAuthenticatedClient(ctx context.Context, owner, repo string) (*github.Client, error) {
-	// Create JWT for App authentication
-	token, err := w.createJWT()
+	// Reconstruct repository URL for GenerateInstallationToken
+	repoURL := fmt.Sprintf("https://github.com/%s/%s", owner, repo)
+
+	// Reuse existing authentication logic from Client
+	installationToken, err := w.Client.GenerateInstallationToken(ctx, repoURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create JWT: %w", err)
-	}
-
-	jwtClient := github.NewClient(&http.Client{
-		Transport: &jwtTransport{
-			token: token,
-		},
-	})
-
-	// Find or use configured installation ID
-	var installationID int64
-	if w.config.InstallationID != 0 {
-		installationID = w.config.InstallationID
-	} else {
-		installation, err := w.findInstallation(ctx, owner, repo, jwtClient)
-		if err != nil {
-			return nil, fmt.Errorf("failed to find installation: %w", err)
-		}
-		installationID = installation.GetID()
-	}
-
-	// Create installation token
-	installationToken, _, err := jwtClient.Apps.CreateInstallationToken(
-		ctx,
-		installationID,
-		&github.InstallationTokenOptions{
-			Repositories: []string{repo},
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create installation token: %w", err)
+		return nil, err
 	}
 
 	// Return authenticated client with installation token
