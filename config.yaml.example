@@ -19,3 +19,6 @@ leaderElection:
 tokenRefresh:
   refreshInterval: "50m"
   tokenLifetime: "60m"
+
+webhook:
+  baseURL: ""  # Base URL for webhook endpoints (e.g., https://flux.example.com)
