@@ -228,7 +228,7 @@ func (r *ReceiverReconciler) reconcileDelete(ctx context.Context, receiver *noti
 func (r *ReceiverReconciler) getReferencedGitRepository(ctx context.Context, receiver *notificationv1.Receiver) (*sourcev1.GitRepository, string, error) {
 	// Look for GitRepository in resources
 	for _, resource := range receiver.Spec.Resources {
-		if resource.Kind == "GitRepository" && resource.APIVersion == sourcev1.GroupVersion.String() {
+		if resource.Kind == "GitRepository" && (resource.APIVersion == "" || resource.APIVersion == sourcev1.GroupVersion.String()) {
 			gitRepo := &sourcev1.GitRepository{}
 			namespace := receiver.Namespace
 			if resource.Namespace != "" {
