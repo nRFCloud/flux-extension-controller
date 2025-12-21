@@ -593,7 +593,9 @@ func TestGitRepositoryReconciler_Reconcile_SkipNonGenericProvidersNoSecretRef(t 
 	}
 
 	mockGitHubClient := &MockGitHubClient{}
-	// ValidateRepositoryURL should NOT be called since provider check happens first
+	// ValidateRepositoryURL should NOT be called: this test validates the combined case where
+	// both the provider is non-generic AND secretRef is missing. The provider check happens first
+	// and short-circuits, so validation never runs regardless of the missing secretRef.
 
 	reconciler := &GitRepositoryReconciler{
 		Client:       fakeClient,
