@@ -6,7 +6,7 @@ Automatically register GitHub webhooks for Flux Receiver resources that referenc
 
 ## Motivation
 
-Currently, when using Flux CD Receivers to trigger reconciliation via webhooks:
+Currently, when using Flux Receivers to trigger reconciliation via webhooks:
 1. Users must manually create webhooks in GitHub repository settings
 2. Users must manually generate and configure webhook secrets
 3. Webhook configuration can become inconsistent across repositories

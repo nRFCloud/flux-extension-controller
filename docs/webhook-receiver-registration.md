@@ -14,7 +14,7 @@ This feature extends the Flux Extension Controller to automatically register Git
 
 ## How It Works
 
-### Resource Relationship
+### Resource Relationships
 
 The feature operates on the following Flux CD resources:
 
@@ -53,7 +53,7 @@ spec:
 
 ### Controller Workflow
 
-1. **Watch Receiver resources**: Monitor Receiver resources with type `github`
+1. **watch Receiver resources**: Monitor Receiver resources with type `github`
 
 2. **Validate resource references**: Check if the referenced GitRepository:
    - Exists in the same namespace
@@ -165,7 +165,7 @@ The GitHub App must have the following additional permissions:
 
 When a webhook token secret doesn't exist:
 
-1. Generate a cryptographically secure random token (64 characters, alphanumeric)
+1. Generate a cryptographically secure random token (64 alphanumeric characters)
 2. Create Kubernetes secret with the following structure:
 
 ```yaml
