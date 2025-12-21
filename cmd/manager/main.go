@@ -12,6 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
+	notificationv1 "github.com/fluxcd/notification-controller/api/v1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1"
 	"github.com/nrfcloud/flux-extension-controller/controllers"
 	"github.com/nrfcloud/flux-extension-controller/pkg/config"
@@ -25,6 +26,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(sourcev1.AddToScheme(scheme))
+	utilruntime.Must(notificationv1.AddToScheme(scheme))
 }
 
 func main() {
@@ -83,6 +85,15 @@ func main() {
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Namespace")
+		os.Exit(1)
+	}
+
+	if err = (&controllers.ReceiverReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		Config: cfg,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Receiver")
 		os.Exit(1)
 	}
 

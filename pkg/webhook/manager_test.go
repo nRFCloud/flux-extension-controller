@@ -44,7 +44,7 @@ func TestEnsureWebhookSecret_CreateNew(t *testing.T) {
 
 	// Verify secret was created
 	secret := &corev1.Secret{}
-	err = client.Get(context.Background(), 
+	err = client.Get(context.Background(),
 		types.NamespacedName{Name: "webhook-token", Namespace: "default"},
 		secret)
 	require.NoError(t, err)
