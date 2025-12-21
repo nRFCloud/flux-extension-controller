@@ -525,7 +525,9 @@ func TestGitRepositoryReconciler_Reconcile_SkipNonGenericProviders(t *testing.T)
 			}
 
 			mockGitHubClient := &MockGitHubClient{}
-			// ValidateRepositoryURL should NOT be called since provider check happens first
+			// ValidateRepositoryURL should NOT be called: non-generic providers are managed by Flux
+			// itself and do not use this controller's GitHub token management, so the provider check
+			// short-circuits before any URL validation.
 
 			reconciler := &GitRepositoryReconciler{
 				Client:       fakeClient,
