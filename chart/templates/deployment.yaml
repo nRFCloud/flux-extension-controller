@@ -48,6 +48,10 @@ spec:
           value: "/etc/github/private-key"
         - name: GITHUB_ORGANIZATION
           value: "{{ .Values.controller.organization }}"
+        {{- if .Values.webhook.baseURL }}
+        - name: WEBHOOK_BASE_URL
+          value: "{{ .Values.webhook.baseURL }}"
+        {{- end }}
         {{- with .Values.env }}
         {{- toYaml . | nindent 8 }}
         {{- end }}

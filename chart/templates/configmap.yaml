@@ -23,6 +23,8 @@ data:
     tokenRefresh:
       refreshInterval: {{ .Values.controller.tokenRefresh.refreshInterval }}
       tokenLifetime: {{ .Values.controller.tokenRefresh.tokenLifetime }}
+    webhook:
+      baseURL: "{{ .Values.webhook.baseURL }}"
     metrics:
       address: "{{ .Values.metrics.address }}:{{ .Values.metrics.port }}"
     healthProbe:
