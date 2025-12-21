@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/fluxcd/pkg/apis/meta v1.23.0
-	github.com/fluxcd/source-controller/api v1.7.3
+	github.com/fluxcd/source-controller/api v1.7.4
 	github.com/go-logr/logr v1.4.3
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/go-github/v76 v76.0.0
