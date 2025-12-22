@@ -253,8 +253,16 @@ func TestJWTTransport(t *testing.T) {
 	req, err := http.NewRequest("GET", server.URL, nil)
 	require.NoError(t, err)
 
+	// Verify original request is not modified
+	originalAuthHeader := req.Header.Get("Authorization")
+	originalAcceptHeader := req.Header.Get("Accept")
+
 	_, err = transport.RoundTrip(req)
 	assert.NoError(t, err)
+
+	// Original request should not have been modified
+	assert.Equal(t, originalAuthHeader, req.Header.Get("Authorization"))
+	assert.Equal(t, originalAcceptHeader, req.Header.Get("Accept"))
 }
 
 func TestInstallationIDConfiguration(t *testing.T) {
