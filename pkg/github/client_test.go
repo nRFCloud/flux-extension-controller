@@ -160,7 +160,7 @@ func TestCreateJWT(t *testing.T) {
 
 	claims, ok := parsedToken.Claims.(jwt.MapClaims)
 	require.True(t, ok)
-	assert.Equal(t, float64(123456), claims["iss"])
+	assert.Equal(t, "123456", claims["iss"])
 	assert.NotNil(t, claims["iat"])
 	assert.NotNil(t, claims["exp"])
 }
