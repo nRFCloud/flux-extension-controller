@@ -10,9 +10,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-logr/logr"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/go-github/v80/github"
 	"github.com/nrfcloud/flux-extension-controller/pkg/config"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 // Client wraps the GitHub client with App authentication
@@ -20,6 +22,7 @@ type Client struct {
 	client     *github.Client
 	config     *config.GitHubConfig
 	privateKey *rsa.PrivateKey
+	logger     logr.Logger
 }
 
 // NewClient creates a new GitHub client with App authentication
@@ -35,6 +38,7 @@ func NewClient(cfg *config.GitHubConfig) (*Client, error) {
 		client:     client,
 		config:     cfg,
 		privateKey: privateKey,
+		logger:     ctrl.Log.WithName("github-client"),
 	}, nil
 }
 
@@ -98,6 +102,11 @@ func (c *Client) GenerateInstallationToken(ctx context.Context, repoURL string) 
 	}
 
 	// Create installation token
+	c.logger.V(1).Info("Creating GitHub installation token",
+		"installationID", installationID,
+		"repository", repo,
+		"owner", owner)
+
 	installationToken, _, err := jwtClient.Apps.CreateInstallationToken(
 		ctx,
 		installationID,
@@ -106,8 +115,19 @@ func (c *Client) GenerateInstallationToken(ctx context.Context, repoURL string) 
 		},
 	)
 	if err != nil {
+		c.logger.Error(err, "Failed to create GitHub installation token",
+			"installationID", installationID,
+			"repository", repo,
+			"owner", owner,
+			"token", token)
 		return nil, fmt.Errorf("failed to create installation token: %w", err)
 	}
+
+	c.logger.V(1).Info("Successfully created GitHub installation token",
+		"installationID", installationID,
+		"repository", repo,
+		"owner", owner,
+		"tokenExpiresAt", installationToken.GetExpiresAt().Format(time.RFC3339))
 
 	return installationToken, nil
 }
