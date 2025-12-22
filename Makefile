@@ -41,6 +41,10 @@ vet: ## Run go vet against code.
 test: fmt vet ## Run tests.
 	go test ./... -coverprofile cover.out
 
+.PHONY: integration-test
+integration-test: ## Run integration tests with kind cluster
+	./test/integration/run-integration-test.sh
+
 ##@ Build
 
 .PHONY: build
