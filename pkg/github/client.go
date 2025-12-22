@@ -178,7 +178,9 @@ type jwtTransport struct {
 }
 
 func (t *jwtTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.Header.Set("Authorization", "Bearer "+t.token)
-	req.Header.Set("Accept", "application/vnd.github.v3+json")
-	return http.DefaultTransport.RoundTrip(req)
+	// Clone the request to avoid modifying the original
+	reqClone := req.Clone(req.Context())
+	reqClone.Header.Set("Authorization", "Bearer "+t.token)
+	reqClone.Header.Set("Accept", "application/vnd.github.v3+json")
+	return http.DefaultTransport.RoundTrip(reqClone)
 }
