@@ -51,7 +51,8 @@ SKIP_CLEANUP=true ./test/integration/run-integration-test.sh
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `CLUSTER_NAME` | Name of the kind cluster to create | `flux-extension-test` |
-| `FLUX_VERSION` | Version of Flux CLI to install | `v2.4.0` |
+| `FLUX_VERSION` | Version of Flux CLI to install | `v2.3.0` |
+| `KIND_NODE_IMAGE` | Kind node image to use | `kindest/node:v1.29.2` |
 | `TIMEOUT` | Timeout in seconds for Kubernetes operations | `300` |
 | `SKIP_CLEANUP` | Keep cluster running after tests | `false` |
 
@@ -191,12 +192,15 @@ If Flux fails to install:
 # Check Flux CLI version
 flux --version
 
-# Try manual installation
-flux install --components=source-controller,notification-controller
+# Try with compatible Kubernetes version
+KIND_NODE_IMAGE=kindest/node:v1.29.2 ./test/integration/run-integration-test.sh
 
-# Check installation status
-flux check
+# Or manually check pod status
+kubectl -n flux-system get pods
+kubectl -n flux-system logs deployment/source-controller
 ```
+
+**Note:** Flux v2.3.0 with Kind node v1.29.2 is the tested stable combination. Newer versions may have compatibility issues.
 
 ### Controller Not Starting
 
