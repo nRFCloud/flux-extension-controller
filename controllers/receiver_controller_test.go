@@ -209,6 +209,136 @@ func TestReceiverReconciler_SkipSuspendedReceivers(t *testing.T) {
 	assert.Equal(t, ctrl.Result{}, result)
 }
 
+func TestReceiverReconciler_GetReferencedGitRepository_WithoutAPIVersion(t *testing.T) {
+	s := runtime.NewScheme()
+	_ = scheme.AddToScheme(s)
+	_ = sourcev1.AddToScheme(s)
+	_ = notificationv1.AddToScheme(s)
+
+	gitRepo := &sourcev1.GitRepository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-repo",
+			Namespace: "default",
+		},
+		Spec: sourcev1.GitRepositorySpec{
+			URL: "https://github.com/test-org/test-repo",
+		},
+	}
+
+	receiver := &notificationv1.Receiver{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-receiver",
+			Namespace: "default",
+		},
+		Spec: notificationv1.ReceiverSpec{
+			Type: "github",
+			SecretRef: fluxmeta.LocalObjectReference{
+				Name: "webhook-token",
+			},
+			Resources: []notificationv1.CrossNamespaceObjectReference{
+				{
+					Kind: "GitRepository",
+					Name: "test-repo",
+					// APIVersion is not specified (empty string)
+				},
+			},
+		},
+	}
+
+	client := fake.NewClientBuilder().
+		WithScheme(s).
+		WithObjects(receiver, gitRepo).
+		Build()
+
+	cfg := &config.Config{
+		Webhook: config.WebhookConfig{
+			BaseURL: "https://example.com",
+		},
+		GitHub: config.GitHubConfig{
+			Organization: "test-org",
+		},
+	}
+
+	reconciler := &ReceiverReconciler{
+		Client: client,
+		Scheme: s,
+		Config: cfg,
+		logger: logr.Discard(),
+	}
+
+	// Test that getReferencedGitRepository works without APIVersion
+	repo, url, err := reconciler.getReferencedGitRepository(context.Background(), receiver)
+	require.NoError(t, err)
+	assert.NotNil(t, repo)
+	assert.Equal(t, "https://github.com/test-org/test-repo", url)
+	assert.Equal(t, "test-repo", repo.Name)
+}
+
+func TestReceiverReconciler_GetReferencedGitRepository_WithAPIVersion(t *testing.T) {
+	s := runtime.NewScheme()
+	_ = scheme.AddToScheme(s)
+	_ = sourcev1.AddToScheme(s)
+	_ = notificationv1.AddToScheme(s)
+
+	gitRepo := &sourcev1.GitRepository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-repo",
+			Namespace: "default",
+		},
+		Spec: sourcev1.GitRepositorySpec{
+			URL: "https://github.com/test-org/test-repo",
+		},
+	}
+
+	receiver := &notificationv1.Receiver{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-receiver",
+			Namespace: "default",
+		},
+		Spec: notificationv1.ReceiverSpec{
+			Type: "github",
+			SecretRef: fluxmeta.LocalObjectReference{
+				Name: "webhook-token",
+			},
+			Resources: []notificationv1.CrossNamespaceObjectReference{
+				{
+					Kind:       "GitRepository",
+					Name:       "test-repo",
+					APIVersion: sourcev1.GroupVersion.String(),
+				},
+			},
+		},
+	}
+
+	client := fake.NewClientBuilder().
+		WithScheme(s).
+		WithObjects(receiver, gitRepo).
+		Build()
+
+	cfg := &config.Config{
+		Webhook: config.WebhookConfig{
+			BaseURL: "https://example.com",
+		},
+		GitHub: config.GitHubConfig{
+			Organization: "test-org",
+		},
+	}
+
+	reconciler := &ReceiverReconciler{
+		Client: client,
+		Scheme: s,
+		Config: cfg,
+		logger: logr.Discard(),
+	}
+
+	// Test that getReferencedGitRepository still works with APIVersion specified
+	repo, url, err := reconciler.getReferencedGitRepository(context.Background(), receiver)
+	require.NoError(t, err)
+	assert.NotNil(t, repo)
+	assert.Equal(t, "https://github.com/test-org/test-repo", url)
+	assert.Equal(t, "test-repo", repo.Name)
+}
+
 // Note: More comprehensive tests would require mocking of GitHub API operations
 // or integration tests with a real GitHub App. The tests above cover the basic
 // controller logic paths (skip conditions).
