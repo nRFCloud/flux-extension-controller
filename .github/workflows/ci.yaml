@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths-ignore:
       - renovate.json
       - .github/workflows/release.yaml
@@ -11,121 +11,123 @@ on:
       - .gitignore
       - config.yaml.example
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v6
+      - name: Checkout
+        uses: actions/checkout@v6
 
-    - name: Set up Go
-      uses: actions/setup-go@v6
-      with:
-        go-version: '1.25'
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.25'
 
-    - name: Cache Go modules
-      uses: actions/cache@v5
-      with:
-        path: ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-
+      - name: Cache Go modules
+        uses: actions/cache@v5
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
 
-    - name: Download dependencies
-      run: go mod download
+      - name: Download dependencies
+        run: go mod download
 
-    - name: Run fmt
-      run: make fmt
+      - name: Run fmt
+        run: make fmt
 
-    - name: Run vet
-      run: make vet
+      - name: Run vet
+        run: make vet
 
-    - name: Run tests
-      run: make test
+      - name: Run tests
+        run: make test
 
-    - name: Upload coverage reports
-      uses: codecov/codecov-action@v5
-      with:
-        file: ./cover.out
-        flags: unittests
-        name: codecov-umbrella
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v5
+        with:
+          file: ./cover.out
+          flags: unittests
+          name: codecov-umbrella
 
   lint-helm:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v6
+      - name: Checkout
+        uses: actions/checkout@v6
 
-    - name: Set up Helm
-      uses: azure/setup-helm@v4
-      with:
-        version: '3.12.0'
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: '3.12.0'
 
-    - name: Lint Helm chart
-      run: make helm-lint
+      - name: Lint Helm chart
+        run: make helm-lint
 
-    - name: Template Helm chart
-      run: make helm-template
+      - name: Template Helm chart
+        run: make helm-template
 
   docker-build:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v6
+      - name: Checkout
+        uses: actions/checkout@v6
 
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v3
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-      with:
-        platforms: linux/amd64
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          platforms: linux/amd64
 
-    - name: Build Docker image
-      uses: docker/build-push-action@v6
-      with:
-        context: .
-        platforms: linux/amd64
-        push: false
-        tags: test-image:latest
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          push: false
+          tags: test-image:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   integration-test:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v6
+      - name: Checkout
+        uses: actions/checkout@v6
 
-    - name: Set up Go
-      uses: actions/setup-go@v6
-      with:
-        go-version: '1.25'
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.25'
 
-    - name: Set up Helm
-      uses: azure/setup-helm@v4
-      with:
-        version: '3.12.0'
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: '3.12.0'
 
-    - name: Set up kind
-      uses: helm/kind-action@v1
-      with:
-        install_only: true
-        version: v0.20.0
-        node_image: kindest/node:v1.29.2
+      - name: Set up kind
+        uses: helm/kind-action@v1
+        with:
+          install_only: true
+          version: v0.20.0
+          node_image: kindest/node:v1.29.2
 
-    - name: Install Flux CLI
-      run: |
-        curl -sL https://github.com/fluxcd/flux2/releases/download/v2.3.0/flux_2.3.0_linux_amd64.tar.gz | tar xz -C /tmp
-        sudo mv /tmp/flux /usr/local/bin/flux
-        chmod +x /usr/local/bin/flux
-        flux --version
+      - name: Install Flux CLI
+        run: |
+          FLUX_URL="https://github.com/fluxcd/flux2/releases/download"
+          FLUX_URL="${FLUX_URL}/v2.3.0/flux_2.3.0_linux_amd64.tar.gz"
+          curl -sL "${FLUX_URL}" | tar xz -C /tmp
+          sudo mv /tmp/flux /usr/local/bin/flux
+          chmod +x /usr/local/bin/flux
+          flux --version
 
-    - name: Run integration tests
-      run: make integration-test
-      env:
-        TIMEOUT: 600
-        KIND_NODE_IMAGE: kindest/node:v1.29.2
-        FLUX_VERSION: v2.3.0
+      - name: Run integration tests
+        run: make integration-test
+        env:
+          TIMEOUT: 600
+          KIND_NODE_IMAGE: kindest/node:v1.29.2
+          FLUX_VERSION: v2.3.0
