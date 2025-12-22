@@ -118,7 +118,7 @@ func (c *Client) createJWT() (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
 		"iat": now.Unix(),
 		"exp": now.Add(10 * time.Minute).Unix(),
-		"iss": c.config.AppID,
+		"iss": fmt.Sprintf("%d", c.config.AppID),
 	})
 
 	tokenString, err := token.SignedString(c.privateKey)
