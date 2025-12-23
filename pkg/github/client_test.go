@@ -321,8 +321,8 @@ func TestTokenContent(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "123456", issuer)
-	assert.GreaterOrEqual(t, now.Unix(), issued.Unix())
-	assert.GreaterOrEqual(t, exp.Unix(), expire.Unix())
+	assert.GreaterOrEqual(t, issued.Unix(), now.Unix())
+	assert.LessOrEqual(t, expire.Unix(), exp.Unix())
 }
 
 func TestInstallationIDDefaultsToZero(t *testing.T) {
