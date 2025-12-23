@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"time"
 
@@ -22,7 +21,7 @@ type Config struct {
 
 // GitHubConfig holds GitHub App configuration
 type GitHubConfig struct {
-	AppID          int64  `yaml:"appId"`
+	AppID          string `yaml:"appId"`
 	InstallationID int64  `yaml:"installationId,omitempty"`
 	PrivateKeyPath string `yaml:"privateKeyPath"`
 	Organization   string `yaml:"organization"`
@@ -88,7 +87,7 @@ func LoadConfig(configPath string) (*Config, error) {
 
 	// Load from file if it exists
 	if _, err := os.Stat(configPath); err == nil {
-		data, err := ioutil.ReadFile(configPath)
+		data, err := os.ReadFile(configPath)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read config file: %w", err)
 		}
@@ -100,7 +99,7 @@ func LoadConfig(configPath string) (*Config, error) {
 
 	// Override with environment variables
 	if appID := os.Getenv("GITHUB_APP_ID"); appID != "" {
-		var id int64
+		var id string
 		if _, err := fmt.Sscanf(appID, "%d", &id); err != nil {
 			return nil, fmt.Errorf("invalid GITHUB_APP_ID: %w", err)
 		}
@@ -155,7 +154,7 @@ func LoadConfig(configPath string) (*Config, error) {
 	}
 
 	// Validate required fields
-	if cfg.GitHub.AppID == 0 {
+	if cfg.GitHub.AppID == "" {
 		return nil, fmt.Errorf("GitHub App ID is required")
 	}
 

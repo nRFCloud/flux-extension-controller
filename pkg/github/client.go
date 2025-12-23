@@ -4,9 +4,9 @@ import (
 	"context"
 	"crypto/rsa"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -138,7 +138,7 @@ func (c *Client) createJWT() (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
 		"iat": now.Unix(),
 		"exp": now.Add(10 * time.Minute).Unix(),
-		"iss": fmt.Sprintf("%d", c.config.AppID),
+		"iss": c.config.AppID,
 	})
 
 	tokenString, err := token.SignedString(c.privateKey)
@@ -179,7 +179,7 @@ func parseRepositoryURL(repoURL string) (string, string, error) {
 
 // loadPrivateKey loads the RSA private key from file
 func loadPrivateKey(keyPath string) (*rsa.PrivateKey, error) {
-	keyData, err := ioutil.ReadFile(keyPath)
+	keyData, err := os.ReadFile(keyPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read private key file: %w", err)
 	}

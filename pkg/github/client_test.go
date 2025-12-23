@@ -22,7 +22,7 @@ func TestValidateRepositoryURL(t *testing.T) {
 	require.NoError(t, err)
 
 	cfg := &config.GitHubConfig{
-		AppID:        123456,
+		AppID:        "123456",
 		Organization: "testorg",
 	}
 
@@ -139,7 +139,7 @@ func TestCreateJWT(t *testing.T) {
 	require.NoError(t, err)
 
 	cfg := &config.GitHubConfig{
-		AppID: 123456,
+		AppID: "123456",
 	}
 
 	client := &Client{
@@ -171,7 +171,7 @@ func TestGenerateInstallationToken_Validation(t *testing.T) {
 	require.NoError(t, err)
 
 	cfg := &config.GitHubConfig{
-		AppID:        123456,
+		AppID:        "123456",
 		Organization: "testorg",
 	}
 
@@ -268,7 +268,7 @@ func TestJWTTransport(t *testing.T) {
 func TestInstallationIDConfiguration(t *testing.T) {
 	// Test that installation ID is properly configured
 	cfg := &config.GitHubConfig{
-		AppID:          123456,
+		AppID:          "123456",
 		InstallationID: 12345,
 		Organization:   "testorg",
 	}
@@ -290,7 +290,7 @@ func TestInstallationIDConfiguration(t *testing.T) {
 func TestInstallationIDDefaultsToZero(t *testing.T) {
 	// Test that installation ID defaults to 0 when not configured
 	cfg := &config.GitHubConfig{
-		AppID:        123456,
+		AppID:        "123456",
 		Organization: "testorg",
 		// No InstallationID set
 	}
