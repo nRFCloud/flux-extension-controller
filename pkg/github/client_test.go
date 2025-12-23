@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/nrfcloud/flux-extension-controller/pkg/config"
@@ -285,6 +286,43 @@ func TestInstallationIDConfiguration(t *testing.T) {
 	assert.Equal(t, int64(12345), client.config.InstallationID)
 	assert.Equal(t, int64(123456), client.config.AppID)
 	assert.Equal(t, "testorg", client.config.Organization)
+}
+
+func TestTokenContent(t *testing.T) {
+	// Test that installation ID is properly configured
+	cfg := &config.GitHubConfig{
+		AppID:          "123456",
+		InstallationID: 12345,
+		Organization:   "testorg",
+	}
+
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	require.NoError(t, err)
+
+	client := &Client{
+		config:     cfg,
+		privateKey: privateKey,
+	}
+	now := time.Now()
+	exp := now.Add(10 * time.Minute)
+	jwtToken, err := client.createJWT()
+	require.NoError(t, err)
+
+	parse, err := jwt.Parse(jwtToken, func(token *jwt.Token) (interface{}, error) { return &privateKey.PublicKey, nil })
+	require.NoError(t, err)
+
+	issuer, err := parse.Claims.GetIssuer()
+	require.NoError(t, err)
+
+	issued, err := parse.Claims.GetIssuedAt()
+	require.NoError(t, err)
+
+	expire, err := parse.Claims.GetExpirationTime()
+	require.NoError(t, err)
+
+	assert.Equal(t, "123456", issuer)
+	assert.GreaterOrEqual(t, now.Unix(), issued.Unix())
+	assert.GreaterOrEqual(t, exp.Unix(), expire.Unix())
 }
 
 func TestInstallationIDDefaultsToZero(t *testing.T) {
