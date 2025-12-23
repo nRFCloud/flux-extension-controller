@@ -289,7 +289,7 @@ func TestInstallationIDConfiguration(t *testing.T) {
 }
 
 func TestTokenContent(t *testing.T) {
-	// Test that installation ID is properly configured
+	// Test that the generated JWT contains the expected issuer and time-based claims
 	cfg := &config.GitHubConfig{
 		AppID:          "123456",
 		InstallationID: 12345,
