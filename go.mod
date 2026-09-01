@@ -6,7 +6,7 @@ require (
 	github.com/fluxcd/notification-controller/api v1.7.5
 	github.com/fluxcd/pkg/apis/meta v1.23.0
 	github.com/fluxcd/source-controller/api v1.7.4
-	github.com/go-logr/logr v1.4.3
+	github.com/go-logr/logr v1.4.4
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/go-github/v80 v80.0.0
 	github.com/google/go-github/v81 v81.0.0
